@@ -1,0 +1,14 @@
+{
+  "name": "ccc",
+  "version": "1.0.0",
+  "description": "Collective Context Commander",
+  "scripts": {
+    "test": "vitest",
+    "test:run": "vitest run",
+    "test:ui": "vitest --ui"
+  },
+  "devDependencies": {
+    "@vitest/ui": "^3.2.4",
+    "vitest": "^3.2.4"
+  }
+}
