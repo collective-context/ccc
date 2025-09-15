@@ -1221,9 +1221,9 @@ class Commands:
         # Check if we should use pre-existing local files for full/experimental
         local_only_dir = Path(__file__).parent.parent / "local-only"
 
-        if section == "full" and (local_only_dir / "full.md").exists():
+        if section == "full" and (local_only_dir / "HELP" / "full.md").exists():
             # Use existing full.md file
-            local_file = local_only_dir / "full.md"
+            local_file = local_only_dir / "HELP" / "full.md"
             try:
                 with open(local_file, 'r', encoding='utf-8') as f:
                     content = f.read()
@@ -1270,9 +1270,9 @@ class Commands:
                 print(f"❌ Error reading {local_file}: {e}")
                 # Fall through to generate content
 
-        if section == "experimental" and (local_only_dir / "experimental.md").exists():
+        if section == "experimental" and (local_only_dir / "HELP" / "experimental.md").exists():
             # Use existing experimental.md file
-            local_file = local_only_dir / "experimental.md"
+            local_file = local_only_dir / "HELP" / "experimental.md"
             try:
                 with open(local_file, 'r', encoding='utf-8') as f:
                     content = f.read()
@@ -1319,9 +1319,9 @@ class Commands:
                 print(f"❌ Error reading {local_file}: {e}")
                 # Fall through to generate content
 
-        if section == "compact" and (local_only_dir / "compact.md").exists():
+        if section == "compact" and (local_only_dir / "HELP" / "compact.md").exists():
             # Use existing compact.md file
-            local_file = local_only_dir / "compact.md"
+            local_file = local_only_dir / "HELP" / "compact.md"
             try:
                 with open(local_file, 'r', encoding='utf-8') as f:
                     content = f.read()
