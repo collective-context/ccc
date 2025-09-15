@@ -1,0 +1,9 @@
+{
+  "prompts": {
+    "system": "You are a helpful assistant",
+    "user": "Help with {{task}}"
+  },
+  "settings": {
+    "temperature": 0.7
+  }
+}
