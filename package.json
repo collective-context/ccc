@@ -5,10 +5,18 @@
   "scripts": {
     "test": "vitest",
     "test:run": "vitest run",
-    "test:ui": "vitest --ui"
+    "test:ui": "vitest --ui",
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "session": "tsc && node dist/cli/index.js"
   },
   "devDependencies": {
+    "@types/node": "^24.4.0",
     "@vitest/ui": "^3.2.4",
+    "typescript": "^5.9.2",
     "vitest": "^3.2.4"
+  },
+  "dependencies": {
+    "commander": "^14.0.1"
   }
 }
