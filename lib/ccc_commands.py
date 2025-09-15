@@ -331,8 +331,10 @@ class Commands:
 
             # Find session files from last few days
             session_files = []
-            for pattern in ["*SESSION*.md", "*session*.md", "*2025-*.md"]:
-                session_files.extend(glob.glob(str(local_only_dir / pattern)))
+            session_dir = local_only_dir / "SESSION"
+            if session_dir.exists():
+                for pattern in ["*SESSION*.md", "*session*.md", "*2025-*.md"]:
+                    session_files.extend(glob.glob(str(session_dir / pattern)))
 
             # Sort by modification time, newest first
             session_files = sorted(session_files, key=os.path.getmtime, reverse=True)[:5]
@@ -435,9 +437,10 @@ class Commands:
         # Get today's date for filename
         today = datetime.now().strftime("%Y-%m-%d")
 
-        # Define local-only directory
+        # Define local-only and SESSION directory
         local_only_dir = self.manager.base_dir / "local-only"
-        local_only_dir.mkdir(parents=True, exist_ok=True)
+        session_dir = local_only_dir / "SESSION"
+        session_dir.mkdir(parents=True, exist_ok=True)
 
         # Determine AI instance prefix
         ai_prefix = ""
@@ -458,7 +461,7 @@ class Commands:
             daily_filename = f"{today}{ai_prefix}_SESSION-SAVE.md"
         else:
             daily_filename = f"{today}_SESSION-SAVE.md"
-        daily_file_path = local_only_dir / daily_filename
+        daily_file_path = session_dir / daily_filename
 
         # Check if file exists
         if daily_file_path.exists():
@@ -527,9 +530,10 @@ class Commands:
         # Create timestamp for filename
         timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M")
 
-        # Define local-only directory
+        # Define local-only and SESSION directory
         local_only_dir = self.manager.base_dir / "local-only"
-        local_only_dir.mkdir(parents=True, exist_ok=True)
+        session_dir = local_only_dir / "SESSION"
+        session_dir.mkdir(parents=True, exist_ok=True)
 
         # Determine AI instance prefix
         ai_prefix = ""
@@ -550,7 +554,7 @@ class Commands:
             session_filename = f"{timestamp}{ai_prefix}_SESSION-FULL.md"
         else:
             session_filename = f"{timestamp}_SESSION-FULL.md"
-        session_file_path = local_only_dir / session_filename
+        session_file_path = session_dir / session_filename
 
         print(f"📝 Creating comprehensive session file: {session_filename}")
         print(f"   📄 Path: {session_file_path}")
@@ -560,7 +564,7 @@ class Commands:
 
         # Look for today's session save file
         today = datetime.now().strftime("%Y-%m-%d")
-        daily_file = local_only_dir / f"{today}_SESSION-SAVE.md"
+        daily_file = session_dir / f"{today}_SESSION-SAVE.md"
 
         daily_content = ""
         if daily_file.exists():
@@ -574,7 +578,7 @@ class Commands:
         print("\n📚 Recent session files for reference:")
         session_files = []
         for pattern in ["*SESSION*.md", "*session*.md"]:
-            session_files.extend(glob.glob(str(local_only_dir / pattern)))
+            session_files.extend(glob.glob(str(session_dir / pattern)))
 
         # Sort by modification time, newest first
         session_files = sorted(session_files, key=os.path.getmtime, reverse=True)[:3]
