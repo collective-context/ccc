@@ -48,6 +48,7 @@ Das CCC-System ist bereits **vollständig einsatzbereit** für folgende Kernfunk
 - **Automatisches Session-Tracking** mit KI-Instanz Zuordnung
 - **Session-Speicherung** mit Zeitstempel und Agent-Kennzeichnung
 - **Session-Wiederherstellung** für nahtlose Workflow-Fortsetzung
+- **🆕 JSON Session Management** - TypeScript-basierte Session-Speicherung mit Metadaten
 - **Alias-Unterstützung** für schnelle Befehle
 
 ### 📚 Intelligentes Help-System
@@ -55,6 +56,12 @@ Das CCC-System ist bereits **vollständig einsatzbereit** für folgende Kernfunk
 - **Drei Help-Modi**: compact, full, experimental
 - **Automatische Formatierung** je nach Ausgabeumgebung
 - **Markdown-Optimierung** für Claude Code Terminal
+
+### 🧪 Testing Infrastructure
+- **Vitest-basiertes Testing** mit TypeScript-Unterstützung
+- **7 Tests** für Core-Funktionalität (Session Management, Basic Operations)
+- **Automatische CI/CD Integration** vorbereitet
+- **Test Scripts** über npm verfügbar
 
 ## 🎮 Verwendung der getesteten Funktionen
 
@@ -75,14 +82,15 @@ ccc context to all -- "Sprint Planning abgeschlossen"
 
 ### Session Management
 ```bash
-# Session für Claude-1 starten
-ccc ses sta cl1
+# Klassisches Session Management
+ccc ses sta cl1                      # Session für Claude-1 starten
+ccc ses sav cl1                      # Session für Claude-1 speichern
+ccc ses end cl1                      # Session für Claude-1 beenden
 
-# Session für Claude-1 speichern
-ccc ses sav cl1
-
-# Session für Claude-1 beenden
-ccc ses end cl1
+# 🆕 JSON Session Management (TypeScript-basiert)
+ccc ses man save "project-alpha"     # JSON Session mit Metadaten speichern
+ccc ses man list                     # Alle JSON Sessions auflisten
+ccc ses man load "2025-09-15_project-alpha.json"  # JSON Session laden
 ```
 
 ### Help-System nutzen
@@ -95,6 +103,18 @@ ccc help full
 
 # Experimentelle Funktionen (mit Warnungen)
 ccc help experimental
+```
+
+### Testing & Development
+```bash
+# Tests ausführen
+npm test                             # Alle Tests (7 Tests)
+npm run test:run                     # CI-Mode Tests
+npm run test:ui                      # UI Test Dashboard
+
+# TypeScript Session Management entwickeln
+npm run build                        # TypeScript kompilieren
+npm run dev                          # Watch Mode für Entwicklung
 ```
 
 ## 🎮 Agent-Rollen im Detail
@@ -131,8 +151,14 @@ ccc help experimental
 git clone https://github.com/collective-context/ccc.git
 cd ccc
 
+# Dependencies installieren (für JSON Session Management & Testing)
+npm install
+
 # Ausführbar machen
 chmod +x ccc
+
+# TypeScript kompilieren (für Session Management Features)
+npm run build
 
 # Optional: Global installieren
 sudo ln -sf "$(pwd)/ccc" /usr/local/bin/ccc
@@ -143,34 +169,94 @@ sudo ln -sf "$(pwd)/ccc" /usr/local/bin/ccc
 # Hilfe anzeigen
 ./ccc help
 
+# Tests ausführen (verifiziert Installation)
+npm test
+
 # Multi-Agent Context System testen
 ./ccc context
 
-# Session für Claude-1 starten
+# Klassisches Session Management
 ./ccc ses sta cl1
+
+# 🆕 JSON Session Management ausprobieren
+./ccc ses man save "first-test"
+./ccc ses man list
 ```
 
 ## 📁 Projekt-Struktur
 
 ```
 ccc/
-├── ccc                          # Haupt-CLI Script
-├── lib/                         # Kern-Module
-│   ├── ccc_manager.py           # Service Management
-│   ├── ccc_commands.py          # Befehl-Implementierung
-│   └── ccc_claude.py            # Inter-Agent Kommunikation
-├── local-only/                  # KI-Instanz Kontextdateien
-│   ├── Claude-1.md              # Claude-1 Kontext
-│   ├── Claude-2.md              # Claude-2 Kontext
-│   ├── Aider-1.md               # Aider-1 Kontext
-│   ├── Aider-2.md               # Aider-2 Kontext
-│   ├── full.md                  # Getestete Funktionen Hilfe
-│   ├── experimental.md          # Experimentelle Funktionen
-│   └── compact.md               # Kompakte Hilfe
-├── config/                      # Konfigurationsdateien
-├── tmp/                         # Temporäre Dateien
-└── 0.HELLO-AI-START-HERE.md     # KI Einstiegspunkt
+├── ccc                                      # Haupt-CLI Script (Python)
+├── package.json                             # Node.js Dependencies & Scripts
+├── tsconfig.json                            # TypeScript Configuration
+├── vitest.config.ts                         # Testing Configuration
+├── 0.HELLO-AI-START-HERE.md                 # KI Einstiegspunkt
+│
+├── lib/                                     # Python Kern-Module
+│   ├── ccc_manager.py                       # Service Management
+│   ├── ccc_commands.py                      # Befehl-Implementierung
+│   └── ccc_claude.py                        # Inter-Agent Kommunikation
+│
+├── src/                                     # TypeScript Source Code
+│   ├── session/
+│   │   └── SimpleSessionManager.ts          # JSON Session Management
+│   └── cli/
+│       ├── index.ts                         # TypeScript CLI Entry
+│       └── session-commands.ts              # Session CLI Commands
+│
+├── tests/                                   # Test Suite (7 Tests)
+│   └── unit/
+│       ├── basic.test.ts                    # Basic functionality tests
+│       ├── helper.test.ts                   # Project structure tests
+│       └── session/
+│           └── SimpleSessionManager.test.ts # Session management tests
+│
+├── dist/                                    # Compiled TypeScript (auto-generated)
+├── node_modules/                            # Node.js Dependencies (auto-generated)
+│
+├── local-only/                              # Private Development Files
+│   ├── SESSION/                             # Session Files (organized)
+│   │   ├── 2025-09-15_CL1_SESSION-SAVE.md  # Daily session saves
+│   │   ├── 2025-09-15_CL1_SESSION-FULL.md  # Complete session exports
+│   │   └── *.json                           # JSON session files
+│   ├── HELP/                                # Help Documentation (organized)
+│   │   ├── compact.md                       # Quick reference (ccc help)
+│   │   ├── full.md                          # Complete docs (ccc help full)
+│   │   └── experimental.md                  # Experimental features
+│   ├── WORK/                                # Work assignments
+│   │   └── 2025-09-15/                      # Daily work logs
+│   ├── Claude-1.md                          # Claude-1 Context
+│   ├── Claude-2.md                          # Claude-2 Context
+│   ├── Aider-1.md                           # Aider-1 Context
+│   └── Aider-2.md                           # Aider-2 Context
+│
+├── config/                                  # Configuration files
+├── tmp/                                     # Temporary files
+└── logs/                                    # Log files
 ```
+
+## 🆕 Neueste Features (September 2025)
+
+### ✨ JSON Session Management (TypeScript-basiert)
+- **Strukturierte Session-Speicherung** mit Metadaten (Timestamp, Arbeitsverzeichnis, Platform)
+- **CLI Integration** über `ccc session manage` Commands
+- **TypeScript Implementation** für bessere Typsicherheit und Erweiterbarkeit
+
+### 🧪 Testing Infrastructure
+- **Vitest Testing Framework** mit 7 automatisierten Tests
+- **TypeScript Test Support** für moderne Entwicklungspraktiken
+- **CI/CD Ready** für kontinuierliche Integration
+
+### 📁 Organisierte Verzeichnisstruktur
+- **SESSION/**: Alle Session-Dateien zentral organisiert
+- **HELP/**: Help-Dokumentation strukturiert abgelegt
+- **WORK/**: Arbeitsaufträge und Logs systematisch archiviert
+
+### 🛠️ Development Workflow
+- **npm Scripts** für Testing, Building und Development
+- **TypeScript Compilation** mit Source Maps und Declarations
+- **Mixed Python/TypeScript Architecture** für beste Tool-Synergien
 
 ## 🔬 Experimentelle Funktionen
 
@@ -186,10 +272,13 @@ ccc/
 ## 🛡️ Sicherheit & Qualität
 
 - ✅ **Getestete Kernfunktionen** sind production-ready
+- ✅ **7 automatisierte Tests** mit Vitest Framework
+- ✅ **TypeScript Integration** für Typsicherheit
 - ✅ **Keine hardcodierten Credentials**
 - ✅ **Sichere Subprocess-Behandlung**
 - ✅ **Input-Validierung** durchgehend
 - ✅ **Audit-bereite Codebasis**
+- ✅ **Strukturierte Projektorganisation** (SESSION/, HELP/, WORK/)
 
 ## 📚 Weiterführende Informationen
 
