@@ -660,6 +660,58 @@ class Commands:
 
         return 0
 
+    def session_manage(self, action=None, name=None):
+        """TypeScript-based session management (save/load/list JSON sessions)"""
+        import subprocess
+        import os
+
+        print("\n🔧 CCC TypeScript Session Management")
+        print("=" * 50)
+
+        # Check if Node.js build exists
+        dist_dir = self.manager.base_dir / "dist"
+        if not dist_dir.exists():
+            print("⚠️  Building TypeScript session management...")
+            try:
+                result = subprocess.run(["npm", "run", "build"],
+                                      cwd=self.manager.base_dir,
+                                      capture_output=True, text=True)
+                if result.returncode != 0:
+                    print(f"❌ Build failed: {result.stderr}")
+                    return 1
+                print("✅ Build successful")
+            except Exception as e:
+                print(f"❌ Error building: {e}")
+                return 1
+
+        if not action:
+            print("Usage:")
+            print("  ccc session manage save <name>     # Save session")
+            print("  ccc session manage list           # List sessions")
+            print("  ccc session manage load <file>    # Load session")
+            return 0
+
+        # Build command
+        cmd = ["node", str(dist_dir / "cli" / "index.js"), "session"]
+
+        if action == "save" and name:
+            cmd.extend(["save", name])
+        elif action == "list":
+            cmd.append("list")
+        elif action == "load" and name:
+            cmd.extend(["load", name])
+        else:
+            print("❌ Invalid action or missing name parameter")
+            return 1
+
+        # Execute TypeScript CLI
+        try:
+            result = subprocess.run(cmd, cwd=self.manager.base_dir)
+            return result.returncode
+        except Exception as e:
+            print(f"❌ Error executing session command: {e}")
+            return 1
+
     def context_read(self, ai_instance=None):
         """Read own AI instance context file"""
         from datetime import datetime

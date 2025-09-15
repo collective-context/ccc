@@ -348,9 +348,16 @@ def main():
             manager = CCCManager()
             commands = Commands(manager)
             return commands.session_end(ai_instance)
+        elif subcommand in ["manage", "man", "m"]:
+            # New TypeScript session management
+            manager = CCCManager()
+            commands = Commands(manager)
+            action = args[1] if len(args) > 1 else None
+            name = args[2] if len(args) > 2 else None
+            return commands.session_manage(action, name)
         else:
             print(f"❌ Unknown session subcommand: {subcommand}")
-            print("Available: ccc session [start|save|end]")
+            print("Available: ccc session [start|save|end|manage]")
             return 1
 
     # Handle partial matching for "session" command
@@ -375,9 +382,16 @@ def main():
             manager = CCCManager()
             commands = Commands(manager)
             return commands.session_end(ai_instance)
+        elif subcommand.startswith("man") or subcommand.startswith("m"):
+            # New TypeScript session management
+            manager = CCCManager()
+            commands = Commands(manager)
+            action = args[1] if len(args) > 1 else None
+            name = args[2] if len(args) > 2 else None
+            return commands.session_manage(action, name)
         else:
             print(f"❌ Unknown session subcommand: {subcommand}")
-            print("Available: ccc session [start|save|end]")
+            print("Available: ccc session [start|save|end|manage]")
             return 1
 
     # Create manager and commands
