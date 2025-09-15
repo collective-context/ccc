@@ -1,0 +1,65 @@
+[build-system]
+requires = ["setuptools>=45", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ccc"
+version = "1.0.0"
+description = "Collective Context Commander - Multi-agent orchestration for Claude Code and AI workflows"
+readme = "README.md"
+license = {text = "MIT"}
+authors = [
+    {name = "Collective Context Community", email = "community@collective-context.org"}
+]
+maintainers = [
+    {name = "Collective Context Community", email = "community@collective-context.org"}
+]
+keywords = ["claude", "ai", "workflow", "orchestration", "tmux", "cli", "multi-agent"]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: POSIX :: Linux",
+    "Operating System :: MacOS",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: System :: Systems Administration",
+    "Topic :: Terminals",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence"
+]
+requires-python = ">=3.10"
+dependencies = []
+
+[project.urls]
+Homepage = "https://collective-context.org"
+Documentation = "https://collective-context.org/ccc/"
+Repository = "https://github.com/collective-context/ccc"
+"Bug Tracker" = "https://github.com/collective-context/ccc/issues"
+Changelog = "https://github.com/collective-context/ccc/releases"
+
+[project.scripts]
+ccc = "ccc_main:main"
+
+[tool.setuptools]
+py-modules = ["ccc_main"]
+packages = ["lib"]
+include-package-data = true
+
+[tool.setuptools.package-dir]
+"" = "."
+"lib" = "lib"
+
+[tool.setuptools.package-data]
+"*" = ["*.md", "*.json", "*.txt"]
+"" = ["ccc"]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=6.0",
+    "black",
+    "flake8",
+    "mypy"
+]

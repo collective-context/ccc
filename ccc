@@ -1,0 +1,529 @@
+#!/usr/bin/env python3
+"""
+CCC - Collective Context Commander
+Professional plugin system for Claude Code session management
+"""
+
+import sys
+import os
+from pathlib import Path
+
+# Add lib directory to path
+sys.path.insert(0, str(Path(__file__).parent / "lib"))
+
+from ccc_manager import CCCManager
+from ccc_commands import Commands
+
+def is_claude_code_environment():
+    """Detect if running in Claude Code environment"""
+    import sys
+    
+    # Check for explicit Claude Code markers first
+    if os.environ.get('CLAUDE_CODE') == '1':
+        return True
+    
+    # Check for known terminal environments (these are NOT Claude Code)
+    terminal_indicators = [
+        os.environ.get('TERM_PROGRAM'),  # tmux, screen, etc.
+        os.environ.get('SSH_CLIENT'),     # SSH session
+        os.environ.get('SSH_TTY'),        # SSH TTY
+    ]
+    if any(terminal_indicators):
+        return False
+    
+    # Check for terminal types that indicate real terminals
+    term = os.environ.get('TERM', '')
+    if any(term.startswith(prefix) for prefix in ['tmux', 'screen', 'xterm', 'rxvt', 'gnome']):
+        return False
+    
+    # Check for dumb terminal or completely missing TTY (likely Claude Code)
+    if (os.environ.get('TERM') == 'dumb' or 
+        (not sys.stdout.isatty() and os.environ.get('TERM_PROGRAM') is None)):
+        return True
+    
+    # Default: assume terminal environment if we have a TTY
+    return not sys.stdout.isatty()
+
+def print_compact_usage():
+    """Print compact usage information for Claude Code"""
+    print("""
+CCC - Collective Context Commander Plugin
+Usage: ccc <command> [service] [options]
+
+[CORE]: status, config, list, help
+[CONTROL]: start, restart, stop, test, exec  
+[SERVICES]: autoinput, save, dialog
+[CONTEXT]: context, context to [target]
+
+Quick Examples:
+  ccc list                   # Show all services
+  ccc status save            # Check save status
+  ccc start autoinput -t=3   # Start autoinput (3min)
+  ccc start save -d          # Start logging + dialog
+  ccc context                # Read own context
+  ccc context to cl2 -- Hi   # Message to Claude-2
+
+Help Options:
+  ccc help full              # Tested/stable functions only
+  ccc help experimental      # Experimental/unreliable functions
+  ccc help core              # Core commands only
+  ccc help control           # Service control commands
+  ccc help services          # Specialized services
+  ccc help context           # Multi-agent context system
+  ccc help options           # Command options
+  ccc help examples          # Usage examples
+  
+TIP: Partial names work! (e.g., 'ccc help con' for context)
+""")
+
+def handle_context_command(args):
+    """Handle context command with various subcommands"""
+    from pathlib import Path
+
+    # Add lib directory to path for imports
+    sys.path.insert(0, str(Path(__file__).parent / "lib"))
+    from ccc_manager import CCCManager
+    from ccc_commands import Commands
+
+    manager = CCCManager()
+    commands = Commands(manager)
+
+    if len(args) == 0:
+        # Simple context read (own context)
+        return commands.context_read()
+
+    # Check for 'to' subcommand
+    if args[0].lower() == "to":
+        if len(args) < 2:
+            print("❌ Missing target. Usage: ccc context to [Claude-2|Aider-1|Aider-2|all]")
+            return 1
+
+        target = args[1]
+
+        # Check for message after --
+        message = None
+        if "--" in args:
+            idx = args.index("--")
+            if idx + 1 < len(args):
+                message = " ".join(args[idx+1:])
+
+        return commands.context_write(target, message)
+
+    else:
+        # Direct instance specification (e.g., ccc context cl2)
+        ai_instance = args[0]
+        return commands.context_read(ai_instance)
+
+def print_usage():
+    """Print usage information"""
+    print("""
+CCC - Collective Context Commander Plugin
+Usage: ccc <command> [service] [options]
+
+[CORE] COMMANDS:
+  ccc status [service]                     Show brief service status  
+  ccc config [service]                     Show detailed service configuration
+  ccc list                                 List all available services
+  ccc help                                 Show compact help message
+  ccc help full                            Show detailed help with all sections
+  ccc help [section]                       Show help for specific section (core, control, services, etc.)
+
+[CONTROL] SERVICE CONTROL:
+  ccc start [service] [-m] [-t=n] [-- text] Start service (optionally with monitor & interval)
+  ccc restart [service] [-m] [-t=n] [-- text] Restart service (stop + start)
+  ccc stop [service] [-m]                  Stop service (optionally stop monitor)
+  ccc test [service]                       Reset to default text and send it once
+  ccc exec [service] -- command            Execute command in service context
+
+[SERVICES] SPECIALIZED SERVICES:
+  ccc start dialog                         Start dialog monitoring service
+  ccc stop dialog                          Stop dialog monitoring service  
+  ccc restart dialog                       Restart dialog monitoring service
+  ccc start save [-d]                      Start Claude Self-Logging (optionally with dialog)
+  ccc restart save [-d]                    Restart save service (optionally with dialog)
+  ccc stop save                            Stop save service
+  
+[CONTEXT] MULTI-AGENT CONTEXT SYSTEM:
+  ccc context, ccc co                      Read own AI instance context
+  ccc context to [target] -- message      Write message to target AI instance
+  ccc context to all -- message           Broadcast message to all AI instances
+  ccc context [instance]                   Read specific AI instance context
+  
+[OPTIONS]:
+  -m, --monitor       Also start/stop the background monitor process
+  -t=n, --time=n      Set interval to n minutes (default: 5)
+  -d, --dialog        Start with dialog monitoring (save service)
+  
+[EXAMPLES]:
+  # Core Commands
+  ccc list                          # Show all available services
+  ccc status autoinput              # Check autoinput brief status
+  ccc config autoinput              # Show detailed autoinput configuration  
+  
+  # AutoInput Service
+  ccc start autoinput               # Start autoinput (5min interval)
+  ccc start autoinput -t=3          # Start with 3 minute interval
+  ccc restart autoinput -m -t=1     # Restart with monitor + 1 minute interval
+  ccc start autoinput -m -t=10 -- "Hi"  # Custom text + monitor + 10min interval
+  ccc stop autoinput                # Stop service only
+  ccc stop autoinput -m             # Stop service + monitor
+  ccc test autoinput                # Reset to default text and send once
+  
+  # Save Service (Claude Self-Logging)
+  ccc start save                    # Start session logging only
+  ccc start save -d                 # Start with dialog monitoring (session + tmux)
+  ccc restart save -d               # Restart with dialog monitoring
+  ccc stop save                     # Stop save service
+  ccc status save                   # Check save service status
+  
+  # Dialog Service (Tmux Monitoring)
+  ccc start dialog                  # Start dialog monitoring service
+  ccc stop dialog                   # Stop dialog monitoring
+  ccc restart dialog                # Restart dialog monitoring
+  ccc status dialog                 # Check dialog status
+  
+  # Command Execution
+  ccc exec autoinput -- "Custom command"   # Execute command in service context
+  
+  # Multi-Agent Context System
+  ccc context                       # Read own AI instance context
+  ccc co cl2                        # Read Claude-2's context
+  ccc context to cl2 -- Hi there   # Send message to Claude-2
+  ccc context to all -- Update     # Broadcast to all AI instances
+  
+[INFO] AVAILABLE SERVICES:
+  autoinput - Automatically sends periodic messages to keep Claude Code session active
+              Default interval: 5 minutes, Default text: "Alles okay?"
+              
+  save      - Claude Self-Logging with optional dialog monitoring
+              Always creates session logs (session_YYYY-MM-DD_HH-MM-SS.md)
+              Optional: tmux dialog monitoring with -d flag (dialog_YYYY-MM-DD_HH-MM-SS.md)
+              
+  dialog    - Tmux dialog monitoring service
+              Monitors and logs all tmux session activity
+              Creates dialog logs (dialog_YYYY-MM-DD_HH-MM-SS.md)
+""")
+
+def main():
+    """Main entry point"""
+    # Check for no arguments or single flags
+    if len(sys.argv) < 2:
+        # Default behavior: show help
+        print_compact_usage()
+        return 0
+    
+    command = sys.argv[1]
+    args = sys.argv[2:]
+    
+    # Handle context command
+    if command in ["context", "co"]:
+        # New multi-agent context system
+        return handle_context_command(args)
+    
+    # Help command
+    if command in ["help", "-h", "--help"]:
+        # Check if we're in Claude Code environment
+        in_claude_code = is_claude_code_environment()
+        
+        if args and args[0] == "full":
+            # Always use file-based approach for better Claude Code integration
+            manager = CCCManager()
+            commands = Commands(manager)
+            return commands.help_write_and_read("full")
+        elif args and args[0] == "experimental":
+            # Always use file-based approach for experimental help
+            manager = CCCManager()
+            commands = Commands(manager)
+            return commands.help_write_and_read("experimental")
+        elif args and args[0] == "all":
+            # Respect environment for 'help all' too
+            manager = CCCManager()
+            commands = Commands(manager)
+            if in_claude_code:
+                return commands.help_write_and_read("all")
+            else:
+                return commands.help_show_paged("all")
+        elif args and len(args) > 0:
+            # Handle special case 'full' first (allow 'f', 'fu', 'ful', 'full')
+            partial_input = args[0].lower()
+            if partial_input in ["f", "fu", "ful"] or partial_input.startswith("full"):
+                # Partial match for 'full'
+                if in_claude_code:
+                    manager = CCCManager()
+                    commands = Commands(manager)
+                    return commands.help_write_and_read("full")
+                else:
+                    manager = CCCManager()
+                    commands = Commands(manager)
+                    return commands.help_show_paged("full")
+            
+            # Define valid sections
+            valid_sections = ["core", "control", "services", "context", "options", "examples", "info", "sections"]
+            
+            # Try to find matches for partial input
+            partial = args[0].lower()
+            matches = [s for s in valid_sections if s.startswith(partial)]
+            
+            if len(matches) == 0:
+                # No matches found
+                print(f"❌ Ungültige Eingabe: ccc help {args[0]}")
+                print("Gültige Eingabe: ccc help [full|core|control|services|communication|options|examples]")
+                return 1
+            elif len(matches) == 1:
+                # Unique match found - use it
+                section = matches[0]
+                if in_claude_code:
+                    manager = CCCManager()
+                    commands = Commands(manager)
+                    return commands.help_write_and_read(section)
+                else:
+                    # In terminal: use normal print for sections
+                    manager = CCCManager()
+                    commands = Commands(manager)
+                    return commands.help_show(section)
+            elif len(matches) > 1:
+                # Ambiguous - show suggestions with minimal unique prefix
+                suggestions = []
+                for match in matches:
+                    # Find the minimal unique prefix for this match
+                    unique_prefix = partial
+                    for i in range(len(partial), len(match)):
+                        unique_prefix = match[:i+1]
+                        # Check if this prefix is unique among all matches
+                        other_matches = [m for m in matches if m != match and m.startswith(unique_prefix)]
+                        if not other_matches:
+                            # This prefix is unique
+                            break
+                    # Show the unique prefix and the rest in brackets
+                    rest = match[len(unique_prefix):]
+                    if rest:
+                        suggestions.append(f"ccc help {unique_prefix}[{rest}]")
+                    else:
+                        suggestions.append(f"ccc help {unique_prefix}")
+                print(f"❓ Ambiguous input. Please specify:")
+                for suggestion in suggestions:
+                    print(f"   {suggestion}")
+                return 1
+            elif args[0] in valid_sections:
+                # Exact match (shouldn't happen but keep for safety)
+                if in_claude_code:
+                    manager = CCCManager()
+                    commands = Commands(manager)
+                    return commands.help_write_and_read(args[0])
+                else:
+                    manager = CCCManager()
+                    commands = Commands(manager)
+                    return commands.help_show(args[0])
+        else:
+            # Default help (compact) - always use file-based approach
+            manager = CCCManager()
+            commands = Commands(manager)
+            return commands.help_write_and_read("compact")
+        return 0
+    
+    # Handle session command with subcommands
+    if command == "session":
+        if len(args) == 0:
+            print("❌ Missing subcommand. Usage: ccc session start")
+            return 1
+
+        subcommand = args[0].lower()
+
+        # Handle partial matching for session subcommands
+        if subcommand in ["start", "sta", "st"]:
+            # Check for AI instance parameter
+            ai_instance = args[1] if len(args) > 1 else None
+            manager = CCCManager()
+            commands = Commands(manager)
+            return commands.session_start(ai_instance)
+        elif subcommand in ["save", "sav", "sa"]:
+            # Check for AI instance parameter
+            ai_instance = args[1] if len(args) > 1 else None
+            manager = CCCManager()
+            commands = Commands(manager)
+            return commands.session_save(ai_instance)
+        elif subcommand in ["end", "ende", "en", "e"]:
+            # Check for AI instance parameter
+            ai_instance = args[1] if len(args) > 1 else None
+            manager = CCCManager()
+            commands = Commands(manager)
+            return commands.session_end(ai_instance)
+        else:
+            print(f"❌ Unknown session subcommand: {subcommand}")
+            print("Available: ccc session [start|save|end]")
+            return 1
+
+    # Handle partial matching for "session" command
+    if command.startswith("ses") and len(args) > 0:
+        subcommand = args[0].lower()
+        # Check for session subcommands
+        if subcommand.startswith("sta"):
+            # Check for AI instance parameter
+            ai_instance = args[1] if len(args) > 1 else None
+            manager = CCCManager()
+            commands = Commands(manager)
+            return commands.session_start(ai_instance)
+        elif subcommand.startswith("sav"):
+            # Check for AI instance parameter
+            ai_instance = args[1] if len(args) > 1 else None
+            manager = CCCManager()
+            commands = Commands(manager)
+            return commands.session_save(ai_instance)
+        elif subcommand.startswith("end") or subcommand.startswith("en"):
+            # Check for AI instance parameter
+            ai_instance = args[1] if len(args) > 1 else None
+            manager = CCCManager()
+            commands = Commands(manager)
+            return commands.session_end(ai_instance)
+        else:
+            print(f"❌ Unknown session subcommand: {subcommand}")
+            print("Available: ccc session [start|save|end]")
+            return 1
+
+    # Create manager and commands
+    manager = CCCManager()
+    commands = Commands(manager)
+
+    # Execute command
+    try:
+        if command == "status":
+            service = args[0] if args else "autoinput"
+            return commands.status(service)
+        
+        elif command == "config":
+            service = args[0] if args else "autoinput"
+            return commands.config(service)
+        
+        elif command == "start":
+            service = "autoinput"
+            custom_text = None
+            with_monitor = False
+            interval_minutes = None
+            
+            # Parse arguments
+            remaining_args = []
+            for arg in args:
+                if arg in ["-m", "--monitor"]:
+                    with_monitor = True
+                elif arg.startswith(("-t=", "--time=")):
+                    # Extract time value
+                    time_str = arg.split("=", 1)[1] if "=" in arg else None
+                    if time_str and time_str.isdigit():
+                        interval_minutes = int(time_str)
+                    else:
+                        print(f"❌ Invalid time format: {arg}. Use -t=n or --time=n where n is minutes")
+                        return 1
+                elif arg == "--":
+                    break
+                else:
+                    remaining_args.append(arg)
+            
+            # Get service name if provided
+            if remaining_args and remaining_args[0] != "--":
+                service = remaining_args[0]
+            
+            # Get custom text if provided
+            if "--" in args:
+                idx = args.index("--")
+                custom_text = " ".join(args[idx+1:]) if idx+1 < len(args) else None
+            
+            # Special handling for save service
+            if service == "save":
+                # Check for -d/--dialog option
+                with_dialog = "-d" in args or "--dialog" in args
+                return commands.start_save(service, with_dialog)
+            else:
+                return commands.start(service, custom_text, with_monitor, interval_minutes)
+        
+        elif command == "restart":
+            service = "autoinput"
+            custom_text = None
+            with_monitor = False
+            interval_minutes = None
+            
+            # Parse arguments (same as start)
+            remaining_args = []
+            for arg in args:
+                if arg in ["-m", "--monitor"]:
+                    with_monitor = True
+                elif arg.startswith(("-t=", "--time=")):
+                    # Extract time value
+                    time_str = arg.split("=", 1)[1] if "=" in arg else None
+                    if time_str and time_str.isdigit():
+                        interval_minutes = int(time_str)
+                    else:
+                        print(f"❌ Invalid time format: {arg}. Use -t=n or --time=n where n is minutes")
+                        return 1
+                elif arg == "--":
+                    break
+                else:
+                    remaining_args.append(arg)
+            
+            # Get service name if provided
+            if remaining_args and remaining_args[0] != "--":
+                service = remaining_args[0]
+            
+            # Get custom text if provided
+            if "--" in args:
+                idx = args.index("--")
+                custom_text = " ".join(args[idx+1:]) if idx+1 < len(args) else None
+            
+            # Special handling for save service
+            if service == "save":
+                # Check for -d/--dialog option
+                with_dialog = "-d" in args or "--dialog" in args
+                return commands.restart_save(service, with_dialog)
+            else:
+                return commands.restart(service, custom_text, with_monitor, interval_minutes)
+        
+        elif command == "stop":
+            service = "autoinput"
+            with_monitor = False
+            
+            # Parse arguments
+            remaining_args = []
+            for arg in args:
+                if arg in ["-m", "--monitor"]:
+                    with_monitor = True
+                else:
+                    remaining_args.append(arg)
+            
+            if remaining_args:
+                service = remaining_args[0]
+            
+            # Special handling for save service
+            if service == "save":
+                return commands.stop_save(service)
+            else:
+                return commands.stop(service, with_monitor)
+        
+        elif command == "test":
+            service = args[0] if args else "autoinput"
+            return commands.test(service)
+        
+        elif command == "exec":
+            service = "autoinput"
+            command_text = None
+            
+            # Parse arguments
+            if "--" in args:
+                idx = args.index("--")
+                service = args[0] if idx > 0 else "autoinput"
+                command_text = " ".join(args[idx+1:]) if idx+1 < len(args) else None
+            
+            return commands.exec(service, command_text)
+        
+        elif command == "list":
+            return commands.list()
+        
+        else:
+            print(f"❌ Unknown command: {command}")
+            print("Use 'ccc help' for usage information")
+            return 1
+            
+    except Exception as e:
+        print(f"❌ Error: {e}")
+        return 1
+
+if __name__ == "__main__":
+    sys.exit(main())
