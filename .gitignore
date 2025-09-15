@@ -40,3 +40,13 @@ config/user_config.json
 
 # Local-only documentation (never commit to GitHub)
 local-only/
+
+# Security-sensitive files
+.env
+.env.local
+*.key
+*.pem
+
+# TypeScript/Node.js
+node_modules/
+dist/
