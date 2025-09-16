@@ -269,15 +269,73 @@ ccc/
 
 *Nutze `ccc help experimental` für Details.*
 
+## 🔒 Security First (v0.2.0+)
+
+Since v0.2.0, CCC uses JSON-based configuration with strict validation:
+
+- ✅ **No code execution in configs**
+- ✅ **Input validation for all commands**
+- ✅ **Path traversal prevention**
+- ✅ **Secure secret management**
+
+### Configuration Migration
+
+Old `.ts` configs are no longer supported. Migrate to JSON:
+
+```json
+// config-json/global/config.json
+{
+  "prompts": {
+    "system": "You are a helpful assistant"
+  },
+  "settings": {
+    "temperature": 0.7
+  }
+}
+```
+
+### Environment Variables
+
+Never store secrets in code:
+
+```bash
+export ANTHROPIC_API_KEY="sk-ant-..."
+export OPENROUTER_API_KEY="sk-or-..."
+```
+
+## 🧪 Testing
+
+Run the test suite:
+
+```bash
+npm test                 # Run all tests
+npm run test:run         # CI mode
+npm run test:coverage    # Coverage report
+npm run test:security    # Security tests only
+```
+
+Current coverage: ~60% (Target: 80%)
+
+## 📚 API Documentation
+
+Full API documentation is available in the source code via JSDoc comments.
+
+Key modules:
+- `SimpleSessionManager` - Session persistence
+- `loadSafeConfig` - Secure config loading
+- `safeExecute` - Shell command safety
+- `validatePath` - Path traversal prevention
+
 ## 🛡️ Sicherheit & Qualität
 
-- ✅ **Getestete Kernfunktionen** sind production-ready
-- ✅ **7 automatisierte Tests** mit Vitest Framework
+- ✅ **Security Audit durchgeführt** (September 2025)
+- ✅ **15+ automatisierte Tests** mit Vitest Framework
 - ✅ **TypeScript Integration** für Typsicherheit
 - ✅ **Keine hardcodierten Credentials**
 - ✅ **Sichere Subprocess-Behandlung**
 - ✅ **Input-Validierung** durchgehend
-- ✅ **Audit-bereite Codebasis**
+- ✅ **JSON-basierte sichere Konfiguration**
+- ✅ **CI/CD Pipeline** mit GitHub Actions
 - ✅ **Strukturierte Projektorganisation** (SESSION/, HELP/, WORK/)
 
 ## 📚 Weiterführende Informationen

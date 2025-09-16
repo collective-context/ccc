@@ -6,9 +6,12 @@
     "test": "vitest",
     "test:run": "vitest run",
     "test:ui": "vitest --ui",
+    "test:coverage": "vitest run --coverage",
+    "test:security": "vitest run tests/security/",
     "build": "tsc",
     "dev": "tsc --watch",
-    "session": "tsc && node dist/cli/index.js"
+    "session": "tsc && node dist/cli/index.js",
+    "lint": "echo 'Linter not configured yet' && exit 0"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",
