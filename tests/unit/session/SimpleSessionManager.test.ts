@@ -51,4 +51,56 @@ describe('SimpleSessionManager', () => {
 
     expect(testSessions.length).toBeGreaterThanOrEqual(2);
   });
+
+  it('should save session with timestamp', () => {
+    const testData = { project: 'test', status: 'active' };
+    manager.saveSession('test-session', testData);
+
+    const sessions = manager.listSessions();
+    const latestSession = sessions[0];
+
+    expect(latestSession).toContain('test-session');
+    expect(latestSession).toMatch(/\d{4}-\d{2}-\d{2}/);
+  });
+
+  it('should load saved session correctly', () => {
+    const testData = {
+      project: 'test-project',
+      status: 'active',
+      agents: ['Claude-1', 'Aider-1']
+    };
+
+    manager.saveSession('test-load', testData);
+    const sessions = manager.listSessions();
+    const loaded = manager.loadSession(sessions[0]);
+
+    expect(loaded.project).toBe('test-project');
+    expect(loaded.agents).toContain('Claude-1');
+  });
+
+  it('should throw error for non-existent session', () => {
+    expect(() => manager.loadSession('non-existent.json'))
+      .toThrow('Session not found');
+  });
+
+  it('should handle session metadata correctly', () => {
+    const sessionData = {
+      id: 'test-123',
+      timestamp: new Date().toISOString(),
+      project: 'test-project',
+      status: 'active' as const,
+      metadata: {
+        nodeVersion: process.version,
+        platform: process.platform,
+        cwd: process.cwd()
+      }
+    };
+
+    manager.saveSession('test-metadata', sessionData);
+    const sessions = manager.listSessions();
+    const loaded = manager.loadSession(sessions[0]);
+
+    expect(loaded.metadata.nodeVersion).toBe(process.version);
+    expect(loaded.metadata.platform).toBe(process.platform);
+  });
 });
