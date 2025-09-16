@@ -10,10 +10,10 @@ CCC wurde als Grundlage für ein **"Collective Context (CC) System"** entwickelt
 
 ### Core Components
 
-#### 1. **Python Dirigent** (`~/prog/claude/collective-context/ccc/`)
-- **Haupteingang**: `~/prog/claude/collective-context/ccc/ccc` (Python Script)
+#### 1. **Python Dirigent** (`~/prog/ai/git/collective-context/ccc/`)
+- **Haupteingang**: `~/prog/ai/git/collective-context/ccc/ccc` (Python Script)
 - **System-Wrapper**: `/usr/local/bin/ccc` (Bash Wrapper für intelligentes Paging)
-- **Bibliotheken**: `~/prog/claude/collective-context/ccc/lib/`
+- **Bibliotheken**: `~/prog/ai/git/collective-context/ccc/lib/`
   - `ccc_manager.py` - Service Management & Configuration
   - `ccc_commands.py` - Command Implementation & Help System
   - `ccc_claude.py` - Inter-Claude Communication

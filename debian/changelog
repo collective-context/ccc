@@ -1,0 +1,9 @@
+cccmd (0.3.0-1) jammy; urgency=medium
+
+  * Initial release
+  * Multi-agent orchestration support
+  * XDG Base Directory compliance
+  * Session persistence via CONTEXT.md
+  * Support for 300+ AI models
+
+ -- Collective Context Team <team@collective-context.org>  Mon, 16 Sep 2025 15:00:00 +0100
