@@ -174,7 +174,7 @@ class ClaudeCommunication:
         """Reserved for future crontab integration"""
         # This will be implemented after sleeping on it :)
         # Ideas:
-        # - Read ~/prog/claude/etc/crontab for scheduled tasks
+        # - Read ~/prog/ai/etc/crontab for scheduled tasks
         # - Execute scheduled Claude communication checks
         # - Manage automated message acknowledgments
         pass

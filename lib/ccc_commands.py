@@ -606,7 +606,7 @@ class Commands:
         session_content = f"""# Complete Session Memory - {timestamp}
 
 **Session End: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}**
-**Location**: ~/prog/claude/git/collective-context/ccc/
+**Location**: ~/prog/ai/git/collective-context/ccc/
 
 ## 🎯 Session Overview
 

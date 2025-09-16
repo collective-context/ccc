@@ -49,4 +49,4 @@ local-only/
 
 # TypeScript/Node.js
 node_modules/
-dist/
+dist/cccmd.egg-info/
