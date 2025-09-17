@@ -13,6 +13,7 @@ sys.path.insert(0, str(Path(__file__).parent / "lib"))
 # Import all necessary modules and functions from ccc script
 from ccc_manager import CCCManager
 from ccc_commands import Commands
+from ccc_ppa_upload import upload_ppa_command
 
 def is_claude_code_environment():
     """Detect if running in Claude Code environment"""
@@ -73,23 +74,76 @@ TIP: Partial names work! (e.g., 'ccc help comm' for communication)
 """)
 
 def main():
-    """Entry point for pip/pipx installation - delegates to ccc script logic"""
-    # Simply execute the main ccc script
-    ccc_script = Path(__file__).parent / "ccc"
-
-    if not ccc_script.exists():
-        print("❌ CCC installation incomplete: ccc script not found")
-        return 1
-
-    # Execute ccc script with current arguments
-    import subprocess
+    """Entry point for pip/pipx installation - direct Python implementation"""
     import sys
 
+    # Initialize CCC manager and commands
+    manager = CCCManager()
+    commands = Commands(manager)
+
+    # Handle no arguments - show help
+    if len(sys.argv) <= 1:
+        print("CCC Commander (cccmd) v0.3.2 - Multi-Agent AI Orchestration")
+        print("\nVerfügbare Commands:")
+        print("  version          - Zeige Version")
+        print("  help             - Zeige diese Hilfe")
+        print("  context          - Context Management")
+        print("  session          - Session Management")
+        print("\nFür detaillierte Hilfe siehe: https://collective-context.org/ccc/")
+        return 0
+
+    command = sys.argv[1]
+    args = sys.argv[2:] if len(sys.argv) > 2 else []
+
     try:
-        result = subprocess.run([str(ccc_script)] + sys.argv[1:], check=False)
-        return result.returncode
+        # Route commands to appropriate handlers
+        if command in ['help', 'h', '--help']:
+            print("CCC Commander (cccmd) v0.3.2 - Multi-Agent AI Orchestration")
+            print("\nVerfügbare Commands:")
+            print("  version          - Zeige Version")
+            print("  help             - Zeige diese Hilfe")
+            print("  context          - Context Management")
+            print("  session          - Session Management")
+            print("  exec upload ppa  - Upload packages to Ubuntu PPA")
+            print("  ex up ppa        - Upload packages (short form)")
+            print("\nFür detaillierte Hilfe siehe: https://collective-context.org/ccc/")
+            return 0
+        elif command == 'version':
+            print("CCC Commander (cccmd) v0.3.2")
+        elif command in ['context', 'co']:
+            if args:
+                commands.handle_context_command(args)
+            else:
+                commands.handle_context_command([])
+        elif command in ['session', 'ses']:
+            if args:
+                commands.handle_session_command(args)
+            else:
+                commands.handle_session_command([])
+        elif command in ['exec', 'ex']:
+            if len(args) >= 2 and args[0] in ['upload', 'up'] and args[1] == 'ppa':
+                return upload_ppa_command(manager)
+            elif len(args) >= 2 and args[0] in ['fix', 'fx'] and args[1] == 'gpg':
+                # ULTIMATE GPG FIX
+                from ccc_ultimate_gpg_fix import fix_all_packages
+                fix_all_packages()
+                return 0
+            else:
+                print("❌ Available exec commands:")
+                print("  ccc exec upload ppa    - Upload packages to PPA")
+                print("  ccc ex up ppa          - Upload packages to PPA (short)")
+                print("  ccc exec fix gpg       - ULTIMATE GPG signature fix")
+                print("  ccc ex fx gpg          - ULTIMATE GPG fix (short)")
+                return 1
+        else:
+            print(f"❌ Unknown command: {command}")
+            print("Use 'cccmd help' for available commands")
+            return 1
+
+        return 0
+
     except Exception as e:
-        print(f"❌ CCC Error: {e}")
+        print(f"❌ Error: {e}")
         return 1
 
 if __name__ == "__main__":
