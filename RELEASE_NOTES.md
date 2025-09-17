@@ -1,10 +1,10 @@
-# CCC Commander v0.3.0 Release Notes
+# CCC Commander v0.3.2 Release Notes
 
 **Release Date**: September 17, 2025
 
 ## 🎉 Major Release: Production-Ready Multi-Agent AI Orchestration
 
-CCC Commander v0.3.0 represents a significant milestone - our first production-ready release with comprehensive testing, security hardening, and enterprise-grade CI/CD infrastructure.
+CCC Commander v0.3.2 represents a significant milestone - our first production-ready release with comprehensive testing, security hardening, and enterprise-grade CI/CD infrastructure.
 
 ## 🚀 Key Highlights
 
