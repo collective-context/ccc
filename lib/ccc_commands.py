@@ -4,6 +4,7 @@ CCC Commands - Command implementations
 
 import subprocess
 from datetime import datetime
+from pathlib import Path
 
 class Commands:
     def __init__(self, manager):
@@ -37,7 +38,82 @@ class Commands:
         
         print("=" * 50)
         return 0
-    
+
+    def config_mode(self, action=None, mode=None):
+        """Manage CCC version modes via config"""
+        if action is None:
+            # Show current mode status
+            current_path = self.manager.get_current_ccc_path()
+            current_mode = self.manager.detect_ccc_mode(current_path)
+            preferred_mode = self.manager.get_preferred_ccc_mode()
+
+            print("\n🔄 CCC Version Management")
+            print("=" * 40)
+            print(f"Current Active: {current_path}")
+            print(f"Current Mode: {current_mode}")
+            print(f"Preferred Mode: {preferred_mode}")
+
+            print(f"\nAvailable Commands:")
+            print(f"  ccc config mode set <dev|pipx|apt>   - Set preferred mode")
+            print(f"  ccc config mode get                  - Show current status")
+            print(f"  ccc config mode reset                - Reset to auto")
+
+            available_modes = self.manager.config.get("version_management", {}).get("available_modes", {})
+            print(f"\nConfigured Paths:")
+            for mode_name, path in available_modes.items():
+                exists = "✅" if Path(path).exists() else "❌"
+                print(f"  {mode_name}: {path} {exists}")
+
+            return 0
+
+        elif action == "set":
+            if mode is None:
+                print("❌ Mode required. Usage: ccc config mode set <dev|pipx|apt>")
+                return 1
+
+            try:
+                old_mode = self.manager.get_preferred_ccc_mode()
+                self.manager.set_preferred_ccc_mode(mode)
+                print(f"✅ Preferred mode changed: {old_mode} → {mode}")
+                print(f"📁 Config saved to: ~/.config/ccc/config.json")
+
+                # Check if the preferred mode is available
+                mode_path = self.manager.get_mode_executable(mode)
+                if mode_path and Path(mode_path).exists():
+                    print(f"✅ {mode} mode is available at: {mode_path}")
+
+                    # Provide switching instructions
+                    if mode == "dev":
+                        print(f"\n🔄 To activate development mode:")
+                        print(f"   export PATH=/usr/local/bin:$PATH")
+                    elif mode == "pipx":
+                        print(f"\n🔄 To activate pipx mode:")
+                        print(f"   export PATH=$HOME/.local/bin:$PATH")
+                else:
+                    print(f"⚠️  Warning: {mode} mode not available at: {mode_path}")
+
+                return 0
+
+            except ValueError as e:
+                print(f"❌ {e}")
+                return 1
+
+        elif action == "get":
+            # Same as no action
+            return self.config_mode()
+
+        elif action == "reset":
+            old_mode = self.manager.get_preferred_ccc_mode()
+            self.manager.set_preferred_ccc_mode("auto")
+            print(f"✅ Mode reset: {old_mode} → auto")
+            print(f"📁 Config saved to: ~/.config/ccc/config.json")
+            return 0
+
+        else:
+            print(f"❌ Unknown action: {action}")
+            print(f"Available: set, get, reset")
+            return 1
+
     def config(self, service="autoinput"):
         """Show service configuration (like old status command)"""
         if service not in self.manager.config["services"]:

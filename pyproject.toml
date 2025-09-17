@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "cccmd"  # WICHTIG: cccmd, nicht ccc!
-version = "0.3.0"
+version = "0.3.2"
 description = "Collective Context Commander - Multi-Agent AI Orchestration Tool"
 authors = [
     {name = "Collective Context Team", email = "team@collective-context.org"}
@@ -26,7 +26,7 @@ classifiers = [
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Topic :: Software Development :: Libraries :: Python Modules",
-    "Topic :: Artificial Intelligence",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
 ]
 
 dependencies = [
@@ -49,7 +49,8 @@ dev = [
 ]
 
 [project.scripts]
-cccmd = "ccc_main:main"  # Command wird 'cccmd' sein
+ccc = "ccc_main:main"  # Hauptcommand ist 'ccc'
+cccmd = "ccc_main:main"  # Alias für Kompatibilität
 
 [project.urls]
 Homepage = "https://collective-context.org"
