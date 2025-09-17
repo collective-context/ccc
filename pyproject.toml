@@ -70,3 +70,34 @@ include-package-data = true
 
 [tool.setuptools.package-data]
 "*" = ["*.md", "*.json", "*.txt"]
+
+[tool.pytest.ini_options]
+minversion = "7.0"
+testpaths = ["tests"]
+python_files = "test_*.py"
+python_classes = "Test*"
+python_functions = "test_*"
+addopts = """
+    --verbose
+    --strict-markers
+    --tb=short
+    --cov=lib
+    --cov-report=term-missing:skip-covered
+    --cov-report=html:htmlcov
+    --cov-report=xml
+    --cov-fail-under=60
+"""
+
+[tool.coverage.run]
+source = ["lib"]
+omit = ["*/tests/*", "*/test_*.py"]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+    "if TYPE_CHECKING:",
+]
