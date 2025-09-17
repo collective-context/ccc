@@ -10,8 +10,13 @@ security:
 
 test:
 	@echo "🧪 Running Tests..."
-	pytest --cov=lib --cov-report=term-missing
+	pytest
 	@echo "✅ Tests complete"
+
+test-coverage:
+	@echo "🧪 Running Tests with Coverage..."
+	pytest --cov=lib --cov-report=term-missing --cov-report=xml
+	@echo "✅ Tests with coverage complete"
 
 test-security:
 	@echo "🔐 Running Security Tests..."
