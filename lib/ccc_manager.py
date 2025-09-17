@@ -30,7 +30,19 @@ class CCCManager:
     
     def load_config(self):
         """Load or create configuration"""
+        # Check for user config first
+        user_config_dir = Path.home() / ".config" / "ccc"
+        user_config_file = user_config_dir / "config.json"
+
         default_config = {
+            "version_management": {
+                "preferred_mode": "auto",  # auto, dev, pipx, apt
+                "available_modes": {
+                    "dev": "/usr/local/bin/ccc",
+                    "pipx": str(Path.home() / ".local/bin/ccc"),
+                    "apt": "/usr/bin/ccc"
+                }
+            },
             "services": {
                 "autoinput": {
                     "enabled": False,
@@ -53,17 +65,27 @@ class CCCManager:
             "log_level": "INFO"
         }
         
-        if self.config_file.exists():
-            with open(self.config_file, 'r') as f:
-                config = json.load(f)
-                # Merge with defaults to ensure all keys exist
-                for key in default_config:
-                    if key not in config:
-                        config[key] = default_config[key]
-                return config
-        else:
-            self.save_config(default_config)
-            return default_config
+        # Try user config first, then local config
+        config_files = [user_config_file, self.config_file]
+
+        for config_file in config_files:
+            if config_file.exists():
+                with open(config_file, 'r') as f:
+                    config = json.load(f)
+                    # Merge with defaults to ensure all keys exist
+                    for key in default_config:
+                        if key not in config:
+                            config[key] = default_config[key]
+                    # Store which config file was used
+                    config['_config_source'] = str(config_file)
+                    return config
+
+        # No config found, create user config
+        user_config_dir.mkdir(parents=True, exist_ok=True)
+        with open(user_config_file, 'w') as f:
+            json.dump(default_config, f, indent=2)
+        default_config['_config_source'] = str(user_config_file)
+        return default_config
     
     def save_config(self, config=None):
         """Save configuration"""
@@ -239,3 +261,67 @@ class CCCManager:
         except Exception as e:
             self.log(f"Failed to stop monitor: {e}", "ERROR")
             return False
+
+    def get_preferred_ccc_mode(self):
+        """Get the preferred CCC mode from config"""
+        return self.config.get("version_management", {}).get("preferred_mode", "auto")
+
+    def set_preferred_ccc_mode(self, mode):
+        """Set the preferred CCC mode in config"""
+        if "version_management" not in self.config:
+            self.config["version_management"] = {}
+
+        valid_modes = ["auto", "dev", "pipx", "apt"]
+        if mode not in valid_modes:
+            raise ValueError(f"Invalid mode: {mode}. Valid modes: {valid_modes}")
+
+        self.config["version_management"]["preferred_mode"] = mode
+        self.save_config_to_user()
+        return mode
+
+    def get_current_ccc_path(self):
+        """Get the current active CCC path"""
+        import subprocess
+        try:
+            result = subprocess.run(["which", "ccc"], capture_output=True, text=True)
+            return result.stdout.strip() if result.returncode == 0 else None
+        except Exception:
+            return None
+
+    def detect_ccc_mode(self, ccc_path=None):
+        """Detect which CCC mode is currently active"""
+        if ccc_path is None:
+            ccc_path = self.get_current_ccc_path()
+
+        if not ccc_path:
+            return "none"
+
+        if "/.local/bin/" in ccc_path or "/pipx/" in ccc_path:
+            return "pipx"
+        elif "/usr/local/bin/" in ccc_path:
+            return "dev"
+        elif "/usr/bin/" in ccc_path or "/apt/" in ccc_path:
+            return "apt"
+        else:
+            return "unknown"
+
+    def get_mode_executable(self, mode):
+        """Get the executable path for a specific mode"""
+        available_modes = self.config.get("version_management", {}).get("available_modes", {})
+        return available_modes.get(mode)
+
+    def save_config_to_user(self):
+        """Save config to user's ~/.config/ccc/config.json"""
+        user_config_dir = Path.home() / ".config" / "ccc"
+        user_config_file = user_config_dir / "config.json"
+
+        user_config_dir.mkdir(parents=True, exist_ok=True)
+
+        # Remove internal fields before saving
+        config_to_save = self.config.copy()
+        config_to_save.pop('_config_source', None)
+
+        with open(user_config_file, 'w') as f:
+            json.dump(config_to_save, f, indent=2)
+
+        self.log(f"Config saved to {user_config_file}", "INFO")
