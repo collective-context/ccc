@@ -40,12 +40,12 @@ def test_context_command():
         assert result == 1  # Expect error since handle_context_command not implemented
 
 def test_session_command():
-    """Testet session Command - currently expects error since methods not implemented."""
+    """Testet session Command - now properly implemented with usage help."""
     from ccc_main import main
 
     with patch.object(sys, 'argv', ['ccc', 'session']):
         result = main()
-        assert result == 1  # Expect error since handle_session_command not implemented
+        assert result == 1  # Should return 1 when no action provided (shows usage as error)
 
 def test_unknown_command():
     """Testet Verhalten bei unbekanntem Command."""

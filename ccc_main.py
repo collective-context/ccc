@@ -108,8 +108,13 @@ def main():
     if not success:
         return 1
 
-    # Display expansion if commands were abbreviated
-    parser.display_expansion(original_args, expanded_commands, free_string)
+    # Check if this is a short version command to combine expansion with output
+    is_short_version = (expanded_commands[0] == 'version' and len(expanded_commands) == 1) or \
+                      (len(expanded_commands) >= 2 and expanded_commands[0] == 'ccc' and expanded_commands[1] == 'version' and len(expanded_commands) == 2)
+
+    # Display expansion if commands were abbreviated (but not for short version)
+    if not is_short_version:
+        parser.display_expansion(original_args, expanded_commands, free_string)
 
     # Validate command chain
     if not parser.validate_command_chain(expanded_commands):
@@ -142,11 +147,28 @@ def main():
                 return 0
 
         elif expanded_commands[0] == 'version' or (len(expanded_commands) >= 2 and expanded_commands[0] == 'ccc' and expanded_commands[1] == 'version'):
-            # Use file-based approach like help full
-            return commands.version_write_and_read()
+            # Check if full version is requested
+            is_full = False
+            if expanded_commands[0] == 'version' and len(expanded_commands) >= 2 and expanded_commands[1] == 'full':
+                is_full = True
+            elif len(expanded_commands) >= 3 and expanded_commands[0] == 'ccc' and expanded_commands[1] == 'version' and expanded_commands[2] == 'full':
+                is_full = True
 
-        elif expanded_commands[0] == 'config':
-            return handle_config_command(expanded_commands, free_string, manager)
+            if is_full:
+                # Use file-based approach for full version
+                return commands.version_write_and_read()
+            else:
+                # Show short version directly in terminal
+                return show_short_version(manager, original_args, expanded_commands)
+
+        elif expanded_commands[0] == 'config' or (len(expanded_commands) >= 2 and expanded_commands[0] == 'ccc' and expanded_commands[1] == 'config'):
+            # Handle both 'config' and 'ccc config' patterns
+            if expanded_commands[0] == 'ccc':
+                # Remove 'ccc' prefix for processing
+                config_commands = expanded_commands[1:]
+            else:
+                config_commands = expanded_commands
+            return handle_config_command(config_commands, free_string, manager)
 
         elif expanded_commands[0] == 'context':
             if len(expanded_commands) > 1:
@@ -157,10 +179,9 @@ def main():
 
         elif expanded_commands[0] == 'session':
             if len(expanded_commands) > 1:
-                commands.handle_session_command(expanded_commands[1:])
+                return commands.handle_session_command(expanded_commands[1:])
             else:
-                commands.handle_session_command([])
-            return 0
+                return commands.handle_session_command([])
 
         elif expanded_commands[0] == 'git':
             return handle_git_command(expanded_commands, free_string, commands)
@@ -182,7 +203,24 @@ def detect_current_mode():
     import sys
     current_path = sys.argv[0]
 
-    # Check if running from source (DEV mode)
+    # Try to load user preference from config first
+    try:
+        from ccc_manager import CCCManager
+        manager = CCCManager()
+        preferred_mode = manager.config.get('version_management', {}).get('preferred_mode', '').lower()
+        available_modes = manager.config.get('version_management', {}).get('available_modes', {})
+
+        # If user has set a preferred mode and the corresponding path exists, use it
+        if preferred_mode and preferred_mode in available_modes:
+            import os
+            preferred_path = available_modes[preferred_mode]
+            if os.path.exists(preferred_path):
+                return preferred_mode.upper(), preferred_path
+    except:
+        # If config loading fails, fall back to path detection
+        pass
+
+    # Fallback: Check if running from source (DEV mode)
     if 'ccc_main.py' in current_path or '/collective-context/ccc' in current_path:
         return 'DEV', current_path
 
@@ -203,6 +241,16 @@ def detect_current_mode():
         else:
             return 'DEV', current_path
 
+def show_short_version(manager, original_args, expanded_commands):
+    """Show compact 3-line version information without expansion noise"""
+    mode, path = detect_current_mode()
+
+    # Don't show expansion for short commands - just show the result directly
+    print("USER: ccc version =====================================================================")
+    print(f"{mode} Mode (v0.3.2)    # Path: {path}")
+    print("ccc config mode apt  # Switch to APT/PIP/DEV version")
+    return 0
+
 def handle_config_command(expanded_commands, free_string, manager):
     """Handle config commands with free string support"""
     if free_string:
@@ -217,7 +265,7 @@ def handle_config_command(expanded_commands, free_string, manager):
 
                 if key == 'eMail' or key == 'email':
                     manager.config['email'] = value
-                    manager.save_config()
+                    manager.save_config_to_user()
                     print(f"✅ Email configured: {value}")
                     return 0
                 else:
@@ -249,8 +297,37 @@ def handle_config_command(expanded_commands, free_string, manager):
 
         print("=" * 50)
         return 0
+    elif len(expanded_commands) >= 2 and expanded_commands[1] == 'mode':
+        # Handle config mode commands
+        if len(expanded_commands) == 2:
+            # Show current mode
+            mode, path = detect_current_mode()
+            print(f"\n🔧 Current Mode: {mode}")
+            print(f"📁 Path: {path}")
+            print("\nAvailable modes:")
+            print("  dev  - Developer version (full features)")
+            print("  pip  - PyPI package (stable)")
+            print("  apt  - System package (stable)")
+            return 0
+        elif len(expanded_commands) == 3:
+            # Set mode
+            target_mode = expanded_commands[2].upper()
+            if target_mode in ['DEV', 'PIP', 'APT']:
+                # Update config
+                manager.config['version_management']['preferred_mode'] = target_mode.lower()
+                manager.save_config_to_user()
+                print(f"✅ Preferred mode set to: {target_mode}")
+                print("💡 Note: This preference will be used for mode detection")
+                return 0
+            else:
+                print(f"❌ Invalid mode: {expanded_commands[2]}")
+                print("Available modes: dev, pip, apt")
+                return 1
+        else:
+            print("❌ Invalid config mode command")
+            return 1
     else:
-        print("❌ Config command requires 'show' or '-- set key=value'")
+        print("❌ Config command requires 'show', 'mode', or '-- set key=value'")
         return 1
 
 def handle_git_command(expanded_commands, free_string, commands):

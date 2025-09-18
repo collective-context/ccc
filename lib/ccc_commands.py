@@ -695,7 +695,7 @@ class Commands:
         print("=" * 50)
         return 0
 
-    def session_start(self, ai_instance=None):
+    def session_start(self, ai_instance=None, session_name=None):
         """Initialize new Claude session with complete CCC context loading"""
 
         # Define AI instance mapping
@@ -725,10 +725,16 @@ class Commands:
 
         # Display session header
         if current_instance:
-            print(f"\n🚀 CCC Session Start - {current_instance['full']} ({current_instance['short']})")
+            header = f"\n🚀 CCC Session Start - {current_instance['full']} ({current_instance['short']})"
+            if session_name:
+                header += f" - 📝 {session_name}"
+            print(header)
             print(f"📋 Role: {current_instance['role']}")
         else:
-            print(f"\n🚀 CCC Session Start - Loading Complete Context...")
+            header = f"\n🚀 CCC Session Start - Loading Complete Context..."
+            if session_name:
+                header += f" - 📝 {session_name}"
+            print(header)
 
         print("=" * 60)
 
@@ -857,7 +863,158 @@ class Commands:
 
         print("\n🚀 Ready for Multi-Agent Development!")
 
+        # CRITICAL: Provide explicit session identity context to Claude
+        print("\n" + "=" * 60)
+        print("🎭 SESSION IDENTITY CONTEXT FOR CLAUDE:")
+        print("=" * 60)
+
+        if session_name:
+            print(f"📋 Your session name is: **{session_name}**")
+            print(f"🔤 When asked 'What is your name?' or 'Who are you?', respond: '{session_name}'")
+
+            # Generate aliases based on session name
+            aliases = self._generate_session_aliases(session_name)
+            if aliases:
+                print(f"🏷️  Your aliases are: {', '.join(aliases)}")
+                print(f"🗃️  When asked for aliases, respond: '{', '.join(aliases)}'")
+
+        if current_instance:
+            print(f"🤖 Your AI instance role: {current_instance['full']} ({current_instance['short']})")
+            print(f"📝 Your role description: {current_instance['role']}")
+            if session_name:
+                print(f"💾 Save session files with prefix: {session_name}")
+            else:
+                print(f"💾 Save session files with prefix: {current_instance['short']}")
+        else:
+            if session_name:
+                print(f"💾 Save session files with prefix: {session_name}")
+
+        print("=" * 60)
+        print("💡 This is your active session identity. Use it consistently!")
+
         return 0
+
+    def _generate_session_aliases(self, session_name):
+        """Generate aliases for session name based on known patterns"""
+        aliases = []
+
+        # Convert to lowercase for processing
+        name_lower = session_name.lower()
+
+        # Handle Claude-X patterns
+        if name_lower.startswith('claude-'):
+            number = name_lower.replace('claude-', '')
+            aliases.extend([
+                f"CL{number.upper()}",
+                f"cl{number}",
+                f"claude-{number}",
+                f"Claude-{number}"
+            ])
+
+        # Handle Aider-X patterns
+        elif name_lower.startswith('aider-'):
+            number = name_lower.replace('aider-', '')
+            aliases.extend([
+                f"AI{number.upper()}",
+                f"ai{number}",
+                f"aider-{number}",
+                f"Aider-{number}"
+            ])
+
+        # Handle CL/AI patterns
+        elif name_lower.startswith('cl'):
+            number = name_lower.replace('cl', '')
+            aliases.extend([
+                f"CL{number.upper()}",
+                f"cl{number}",
+                f"claude-{number}",
+                f"Claude-{number}"
+            ])
+
+        elif name_lower.startswith('ai'):
+            number = name_lower.replace('ai', '')
+            aliases.extend([
+                f"AI{number.upper()}",
+                f"ai{number}",
+                f"aider-{number}",
+                f"Aider-{number}"
+            ])
+
+        # For custom names, generate basic variations
+        else:
+            # Add lowercase, uppercase, title case variations
+            if session_name != session_name.lower():
+                aliases.append(session_name.lower())
+            if session_name != session_name.upper():
+                aliases.append(session_name.upper())
+            if session_name != session_name.title():
+                aliases.append(session_name.title())
+
+        # Remove duplicates and the original session name
+        aliases = list(set(aliases))
+        if session_name in aliases:
+            aliases.remove(session_name)
+
+        return aliases
+
+    def _normalize_session_name(self, session_name):
+        """Normalize session name to standard format"""
+        if not session_name:
+            return None
+
+        # Convert to lowercase for processing
+        name_lower = session_name.lower().replace('-', '').replace('_', '')
+
+        # Define normalization mapping
+        normalization_map = {
+            # Claude variants
+            'claude1': 'Claude-1',
+            'claude2': 'Claude-2',
+            'claude3': 'Claude-3',
+            'cl1': 'Claude-1',
+            'cl2': 'Claude-2',
+            'cl3': 'Claude-3',
+
+            # Aider variants
+            'aider1': 'Aider-1',
+            'aider2': 'Aider-2',
+            'ai1': 'Aider-1',
+            'ai2': 'Aider-2',
+        }
+
+        # Check if it matches a known pattern
+        if name_lower in normalization_map:
+            return normalization_map[name_lower]
+
+        # If it's already in proper format (Claude-X, Aider-X), return as-is
+        if session_name.startswith('Claude-') or session_name.startswith('Aider-'):
+            return session_name
+
+        # For unknown names, return as-is but title-cased
+        return session_name.title()
+
+    def _generate_session_aliases(self, session_name):
+        """Generate aliases for session name based on known patterns"""
+        aliases = []
+
+        # For normalized names, provide single standardized alias
+        if session_name == 'Claude-1':
+            return ['CL1']
+        elif session_name == 'Claude-2':
+            return ['CL2']
+        elif session_name == 'Claude-3':
+            return ['CL3']
+        elif session_name == 'Aider-1':
+            return ['AI1']
+        elif session_name == 'Aider-2':
+            return ['AI2']
+
+        # For custom names, generate basic variations
+        name_upper = session_name.upper()
+        if name_upper != session_name:
+            aliases.append(name_upper)
+
+        return aliases
 
     def session_save(self, ai_instance=None):
         """Save current session knowledge to daily file (append/update mode)"""
@@ -2239,7 +2396,43 @@ Tmux dialog monitoring service
             print(f"❌ Error displaying help: {e}")
             # Fallback to simple help_show
             return self.help_show("all")
-    
+
+    def handle_session_command(self, args):
+        """Handle session commands: start, save, end"""
+        if not args:
+            print("❌ Session command requires action: start, save, or end")
+            print("Usage:")
+            print("  ccc session start [-n=session-name] [ai-instance]   # Start new session")
+            print("  ccc session save [ai-instance]                      # Save current session")
+            print("  ccc session end [ai-instance]                       # End session")
+            return 1
+
+        action = args[0].lower()
+
+        # Parse parameters
+        session_name = None
+        ai_instance = None
+        remaining_args = args[1:]
+
+        for arg in remaining_args:
+            if arg.startswith('-n='):
+                session_name = arg[3:]  # Extract name after -n=
+            elif not arg.startswith('-'):
+                ai_instance = arg
+
+        if action in ['start', 'sta']:
+            # Normalize session name if provided
+            normalized_session_name = self._normalize_session_name(session_name) if session_name else None
+            return self.session_start(ai_instance, normalized_session_name)
+        elif action in ['save', 'sav']:
+            return self.session_save(ai_instance)
+        elif action in ['end', 'ende']:
+            return self.session_end(ai_instance)
+        else:
+            print(f"❌ Unknown session action: {action}")
+            print("Available actions: start, save, end")
+            return 1
+
     def _generate_full_help_content(self):
         """Generate full help content for pager display"""
         return """CCC - Collective Context Commander Plugin
@@ -2336,6 +2529,6 @@ dialog    - Tmux dialog monitoring service
 
 ---
 
-CCC - Collective Context Commander  
+CCC - Collective Context Commander
 Professional plugin system for multi-Claude session coordination
 """

@@ -27,12 +27,24 @@ class CommandParser:
             'full': ['fu', 'ful', 'full'],
             'show': ['sh', 'sho', 'show'],
             'set': ['se', 'set'],
+            'mode': ['mo', 'mod', 'mode'],
             'homepage': ['ho', 'hom', 'home', 'homep', 'homepa', 'homepag', 'homepage'],
             'ppa': ['pp', 'ppa'],
             'ccc': ['cc', 'ccc'],  # can be command or target
             'version': ['ve', 'ver', 'vers', 'versi', 'versio', 'version'],
             'fix': ['fi', 'fix'],
-            'gpg': ['gp', 'gpg']
+            'gpg': ['gp', 'gpg'],
+            'dev': ['de', 'dev'],
+            'pip': ['pi', 'pip'],
+            'apt': ['ap', 'apt'],
+            # Session sub-commands
+            'save': ['sa', 'sav', 'save'],
+            'end': ['en', 'end', 'ende'],
+            # AI instances
+            'claude-1': ['cl1', 'claude-1'],
+            'claude-2': ['cl2', 'claude-2'],
+            'aider-1': ['ai1', 'aider-1'],
+            'aider-2': ['ai2', 'aider-2']
         }
 
         # Define conflicts where abbreviations are ambiguous
@@ -66,10 +78,14 @@ class CommandParser:
         # Expand each command part
         expanded_commands = []
         for i, arg in enumerate(command_args):
-            expanded = self.expand_command(arg, i, command_args)
-            if expanded is None:
-                return [], "", False
-            expanded_commands.append(expanded)
+            # Skip option parameters (starting with -)
+            if arg.startswith('-'):
+                expanded_commands.append(arg)  # Pass through options as-is
+            else:
+                expanded = self.expand_command(arg, i, command_args)
+                if expanded is None:
+                    return [], "", False
+                expanded_commands.append(expanded)
 
         return expanded_commands, free_string, True
 
@@ -147,13 +163,23 @@ class CommandParser:
             ['help'],
             ['help', 'full'],    # Support help full pattern
             ['version'],
+            ['version', 'full'],  # Support version full pattern
             ['ccc', 'version'],  # Support ccc version pattern
+            ['ccc', 'version', 'full'],  # Support ccc version full pattern
             ['ccc', 'help'],     # Support ccc help pattern
             ['ccc', 'help', 'full'],  # Support ccc help full pattern
             ['status'],
             ['config'],  # config alone is valid (shows config)
             ['config', 'show'],
             ['config', 'set'],
+            ['config', 'mode'],  # config mode (show current mode)
+            ['config', 'mode', 'dev'],  # config mode dev
+            ['config', 'mode', 'pip'],  # config mode pip
+            ['config', 'mode', 'apt'],  # config mode apt
+            ['ccc', 'config', 'mode'],  # ccc config mode (show current mode)
+            ['ccc', 'config', 'mode', 'dev'],  # ccc config mode dev
+            ['ccc', 'config', 'mode', 'pip'],  # ccc config mode pip
+            ['ccc', 'config', 'mode', 'apt'],  # ccc config mode apt
             ['session'],
             ['context'],
             ['git', 'push', 'homepage'],
