@@ -146,6 +146,7 @@ class CommandParser:
             ['help'],
             ['version'],
             ['status'],
+            ['config'],  # config alone is valid (shows config)
             ['config', 'show'],
             ['config', 'set'],
             ['session'],

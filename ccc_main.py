@@ -172,27 +172,7 @@ def main():
 
 def handle_config_command(expanded_commands, free_string, manager):
     """Handle config commands with free string support"""
-    if len(expanded_commands) == 1 or (len(expanded_commands) == 2 and expanded_commands[1] == 'show'):
-        # Show current configuration
-        print("\n📋 CCC Configuration")
-        print("=" * 50)
-
-        config_file = manager.config.get('_config_source', 'Unknown')
-        print(f"📁 Config file: {config_file}")
-
-        # Show email if configured
-        email = manager.config.get('email', 'Not configured')
-        print(f"📧 Email: {email}")
-
-        # Show version management
-        vm = manager.config.get('version_management', {})
-        preferred_mode = vm.get('preferred_mode', 'Unknown')
-        print(f"🔧 Preferred mode: {preferred_mode}")
-
-        print("=" * 50)
-        return 0
-
-    elif free_string:
+    if free_string:
         # Handle config set commands from free string
         if free_string.startswith('set '):
             set_command = free_string[4:]  # Remove 'set '
@@ -217,6 +197,25 @@ def handle_config_command(expanded_commands, free_string, manager):
         else:
             print("❌ Invalid config command. Use: config -- set key=value")
             return 1
+    elif len(expanded_commands) == 1 or (len(expanded_commands) == 2 and expanded_commands[1] == 'show'):
+        # Show current configuration
+        print("\n📋 CCC Configuration")
+        print("=" * 50)
+
+        config_file = manager.config.get('_config_source', 'Unknown')
+        print(f"📁 Config file: {config_file}")
+
+        # Show email if configured
+        email = manager.config.get('email', 'Not configured')
+        print(f"📧 Email: {email}")
+
+        # Show version management
+        vm = manager.config.get('version_management', {})
+        preferred_mode = vm.get('preferred_mode', 'Unknown')
+        print(f"🔧 Preferred mode: {preferred_mode}")
+
+        print("=" * 50)
+        return 0
     else:
         print("❌ Config command requires 'show' or '-- set key=value'")
         return 1
