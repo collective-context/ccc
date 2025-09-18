@@ -315,6 +315,122 @@ class Commands:
             print("❌ Failed to send command!")
             return 1
 
+    def version_write_and_read(self):
+        """Write version info to file and read it for display"""
+        import os
+        import sys
+        from pathlib import Path
+        import subprocess
+
+        # Detect current mode
+        def detect_current_mode():
+            current_path = sys.argv[0]
+
+            # Check if running from source (DEV mode)
+            if 'ccc_main.py' in current_path or '/collective-context/ccc' in current_path:
+                return 'DEV', current_path
+
+            # Check common installation paths
+            if '/usr/bin/' in current_path or current_path == 'ccc':
+                return 'APT', '/usr/bin/ccc'
+            elif '/.local/bin/' in current_path or 'pipx' in current_path:
+                return 'PIP', current_path
+            elif '/usr/local/bin/' in current_path:
+                return 'DEV', current_path
+            else:
+                # Try to determine by checking what's available
+                import shutil
+                if shutil.which('ccc') and '/usr/bin/' in shutil.which('ccc'):
+                    return 'APT', shutil.which('ccc')
+                elif shutil.which('cccmd'):
+                    return 'PIP', shutil.which('cccmd')
+                else:
+                    return 'DEV', current_path
+
+        mode, path = detect_current_mode()
+
+        # Check for existing VERSION_INFO.md file
+        local_only_dir = Path(__file__).parent.parent / "local-only" / "HELP"
+        version_file = local_only_dir / "VERSION_INFO.md"
+
+        if version_file.exists():
+            try:
+                with open(version_file, 'r', encoding='utf-8') as f:
+                    template = f.read()
+
+                # Replace placeholders
+                content = template.replace("{{MODE}}", mode)
+                content = content.replace("{{PATH}}", path)
+
+                # Set installation info based on mode
+                if mode == 'APT':
+                    install_info = "📦 Installed via: apt install ccc && apt install cccmd"
+                    mode_desc = "🔧 Mode: Stable System Package - grundlegende Commands"
+                    update_cmd = "apt update && apt upgrade"
+                elif mode == 'PIP':
+                    install_info = "📦 Installed via: pipx install cccmd"
+                    mode_desc = "🔧 Mode: Stable PyPI Package - grundlegende Commands"
+                    update_cmd = "pipx upgrade cccmd"
+                elif mode == 'DEV':
+                    install_info = "📦 Installed via: git clone https://github.com/collective-context/ccc"
+                    mode_desc = "🔧 Mode: Developer - Vollständiges Session-Management inkl. neuen Features"
+                    update_cmd = "cd ~/prog/ai/git/collective-context/ccc && git pull origin main"
+                else:
+                    install_info = "📦 Installation method unknown"
+                    mode_desc = "🔧 Mode: Unknown installation method"
+                    update_cmd = "# Update method depends on installation"
+
+                content = content.replace("{{INSTALL_INFO}}", install_info)
+                content = content.replace("{{MODE_DESC}}", mode_desc)
+                content = content.replace("{{UPDATE_COMMAND}}", update_cmd)
+
+                # Check if we're in a real terminal or Claude Code
+                if sys.stdout.isatty():
+                    # Terminal: Create optimized version
+                    terminal_content = content.replace("```bash\n", "").replace("```\n", "").replace("```", "")
+
+                    # Create temporary file for viewing
+                    import tempfile
+                    with tempfile.NamedTemporaryFile(mode='w', suffix='.md', delete=False) as temp_file:
+                        temp_file.write(terminal_content)
+                        temp_file_path = temp_file.name
+
+                    # Try to open with nano or less
+                    try:
+                        subprocess.run(['nano', '-v', temp_file_path], check=False)
+                        os.unlink(temp_file_path)
+                        return 0
+                    except FileNotFoundError:
+                        try:
+                            subprocess.run(['less', temp_file_path], check=False)
+                            os.unlink(temp_file_path)
+                            return 0
+                        except FileNotFoundError:
+                            # Fallback: print directly
+                            os.unlink(temp_file_path)
+                            print(terminal_content)
+                            return 0
+                else:
+                    # Claude Code environment: Write to temp file for reading
+                    import tempfile
+                    with tempfile.NamedTemporaryFile(mode='w', suffix='_VERSION.md', delete=False) as temp_file:
+                        temp_file.write(content)
+                        temp_file_path = temp_file.name
+
+                    print(f"📝 Version information written to: {temp_file_path}")
+                    print("🎯 Claude: Please read and display this file!")
+                    print(f"📄 File: {temp_file_path}")
+                    return 0
+
+            except Exception as e:
+                print(f"❌ Error processing version file: {e}")
+                # Fallback to simple version display
+
+        # Fallback if no template file exists
+        print(f"CCC Commander (cc/ccc/cccmd) v0.3.2 {mode} ({path})")
+        print("📖 Documentation: https://collective-context.org/ccc/installation/")
+        return 0
+
     def git_push_homepage(self, message=None):
         """Analyze session achievements and update collective-context.org"""
         print("🌐 CCC Homepage Update Tool")

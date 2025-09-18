@@ -136,8 +136,8 @@ def main():
             return 0
 
         elif expanded_commands[0] == 'version' or (len(expanded_commands) >= 2 and expanded_commands[0] == 'ccc' and expanded_commands[1] == 'version'):
-            show_version_info(manager)
-            return 0
+            # Use file-based approach like help full
+            return commands.version_write_and_read()
 
         elif expanded_commands[0] == 'config':
             return handle_config_command(expanded_commands, free_string, manager)
@@ -170,6 +170,32 @@ def main():
     except Exception as e:
         print(f"❌ Error: {e}")
         return 1
+
+def detect_current_mode():
+    """Detect which mode CCC is currently running in"""
+    import sys
+    current_path = sys.argv[0]
+
+    # Check if running from source (DEV mode)
+    if 'ccc_main.py' in current_path or '/collective-context/ccc' in current_path:
+        return 'DEV', current_path
+
+    # Check common installation paths
+    if '/usr/bin/' in current_path or current_path == 'ccc':
+        return 'APT', '/usr/bin/ccc'
+    elif '/.local/bin/' in current_path or 'pipx' in current_path:
+        return 'PIP', current_path
+    elif '/usr/local/bin/' in current_path:
+        return 'DEV', current_path
+    else:
+        # Try to determine by checking what's available
+        import shutil
+        if shutil.which('ccc') and '/usr/bin/' in shutil.which('ccc'):
+            return 'APT', shutil.which('ccc')
+        elif shutil.which('cccmd'):
+            return 'PIP', shutil.which('cccmd')
+        else:
+            return 'DEV', current_path
 
 def handle_config_command(expanded_commands, free_string, manager):
     """Handle config commands with free string support"""
@@ -252,66 +278,6 @@ def handle_exec_command(expanded_commands, manager):
     print("  ex[ec] fi[x] gp[g]       - ULTIMATE GPG signature fix")
     return 1
 
-def detect_current_mode():
-    """Detect which mode CCC is currently running in"""
-    import sys
-    current_path = sys.argv[0]
-
-    # Check if running from source (DEV mode)
-    if 'ccc_main.py' in current_path or '/ccc/' in current_path:
-        return 'DEV', current_path
-
-    # Check common installation paths
-    if '/usr/bin/' in current_path or current_path == 'ccc':
-        return 'APT', '/usr/bin/ccc'
-    elif '/.local/bin/' in current_path or 'pipx' in current_path:
-        return 'PIP', current_path
-    elif '/usr/local/bin/' in current_path:
-        return 'DEV', current_path
-    else:
-        # Try to determine by checking what's available
-        import shutil
-        if shutil.which('ccc') and '/usr/bin/' in shutil.which('ccc'):
-            return 'APT', shutil.which('ccc')
-        elif shutil.which('cccmd'):
-            return 'PIP', shutil.which('cccmd')
-        else:
-            return 'UNKNOWN', current_path
-
-def show_version_info(manager):
-    """Show comprehensive version information with mode detection"""
-    mode, path = detect_current_mode()
-
-    # Base version info
-    version = "v0.3.2"
-
-    if mode == 'APT':
-        print(f"CCC Commander (cc/ccc/cccmd) {version} APT ({path})")
-        print("📦 Installed via: apt install ccc && apt install cccmd")
-        print("🔧 Mode: Stable System Package - grundlegende Commands")
-    elif mode == 'PIP':
-        print(f"CCC Commander (cc/ccc/cccmd) {version} PIP ({path})")
-        print("📦 Installed via: pipx install cccmd")
-        print("🔧 Mode: Stable PyPI Package - grundlegende Commands")
-    elif mode == 'DEV':
-        print(f"CCC Commander (cc/ccc/cccmd) {version} DEV ({path})")
-        print("📦 Installed via: git clone https://github.com/collective-context/ccc")
-        print("🔧 Mode: Developer - Vollständiges Session-Management inkl. neuen Features")
-    else:
-        print(f"CCC Commander (cc/ccc/cccmd) {version} UNKNOWN ({path})")
-        print("🔧 Mode: Unknown installation method")
-
-    print()
-    print("📖 Dokumentation: https://collective-context.org/ccc/installation/")
-    print("🎯 GitHub Repository: https://github.com/collective-context/ccc")
-
-    # Show available modes if in DEV
-    if mode == 'DEV':
-        print()
-        print("🔄 Verfügbare Modi:")
-        print("   APT:  Stable System Package (apt install ccc)")
-        print("   PIP:  Stable PyPI Package (pipx install cccmd)")
-        print("   DEV:  Developer Version (current)")
 
 if __name__ == "__main__":
     sys.exit(main())
