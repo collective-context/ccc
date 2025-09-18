@@ -145,6 +145,8 @@ class CommandParser:
         valid_patterns = [
             ['help'],
             ['version'],
+            ['ccc', 'version'],  # Support ccc version pattern
+            ['ccc', 'help'],     # Support ccc help pattern
             ['status'],
             ['config'],  # config alone is valid (shows config)
             ['config', 'show'],
