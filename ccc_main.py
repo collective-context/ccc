@@ -86,7 +86,7 @@ def main():
     # Handle no arguments - show help
     if len(sys.argv) <= 1:
         mode, path = detect_current_mode()
-        print(f"CCC Commander (cc/ccc/cccmd) v0.3.2 {mode} - Multi-Agent AI Orchestration")
+        print(f"CCC Commander (cc/ccc/cccmd) v0.3.3 {mode} - Multi-Agent AI Orchestration")
         print("\nVerfügbare Commands (mit flexiblen Abkürzungen):")
         print("  ve[rsion]        - Zeige Version und Installation")
         print("  he[lp]           - Zeige diese Hilfe")
@@ -130,7 +130,7 @@ def main():
                 return commands.help_write_and_read("full")
             else:
                 # Standard help
-                print("CCC Commander (cccmd) v0.3.2 - Multi-Agent AI Orchestration")
+                print("CCC Commander (cccmd) v0.3.3 - Multi-Agent AI Orchestration")
                 print("\nVerfügbare Commands (mit flexiblen Abkürzungen):")
                 print("  ve[rsion]        - Zeige Version")
                 print("  he[lp]           - Zeige diese Hilfe")
@@ -247,7 +247,7 @@ def show_short_version(manager, original_args, expanded_commands):
 
     # Don't show expansion for short commands - just show the result directly
     print("USER: ccc version =====================================================================")
-    print(f"{mode} Mode (v0.3.2)    # Path: {path}")
+    print(f"{mode} Mode (v0.3.3)    # Path: {path}")
     print("ccc config mode apt  # Switch to APT/PIP/DEV version")
     return 0
 

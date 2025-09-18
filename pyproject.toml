@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "cccmd"  # WICHTIG: cccmd, nicht ccc!
-version = "0.3.2"
+version = "0.3.3"
 description = "Collective Context Commander - Multi-Agent AI Orchestration Tool"
 authors = [
     {name = "Collective Context Team", email = "team@collective-context.org"}
