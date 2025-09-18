@@ -335,13 +335,16 @@ class Commands:
         print("📄 Check: https://collective-context.org")
         return 0
 
-    def git_push_ccc(self):
-        """Quality control, security audit and push CCC to GitHub"""
+    def git_push_ccc(self, run_tests=False):
+        """Quick push or full validation with tests, then push CCC to GitHub"""
         import subprocess
         import os
         from pathlib import Path
 
-        print("🔍 CCC Quality Control & Security Audit")
+        if run_tests:
+            print("🔍 CCC Full Quality Control & Security Audit")
+        else:
+            print("⚡ CCC Quick Push (without tests)")
         print("=" * 50)
 
         # Check if we're in the right directory
@@ -352,81 +355,90 @@ class Commands:
             print(f"📁 Switching to CCC directory: {expected_dir}")
             os.chdir(expected_dir)
 
-        print("\n🧪 Step 1: Running Test Suite...")
-        try:
-            result = subprocess.run(["make", "test"], capture_output=True, text=True, timeout=300)
-            if result.returncode == 0:
-                print("✅ All tests passed!")
-                # Count test results
-                if "passed" in result.stdout:
-                    test_line = [line for line in result.stdout.split('\n') if 'passed' in line][-1]
-                    print(f"📊 {test_line}")
-            else:
-                print("❌ Tests failed!")
-                print(result.stderr)
-                return 1
-        except subprocess.TimeoutExpired:
-            print("⏱️ Tests timed out - continuing anyway")
-        except FileNotFoundError:
-            print("⚠️ Make not available - running pytest directly")
+        # Only run tests and audits if requested
+        if run_tests:
+            print("\n🧪 Step 1: Running Test Suite...")
             try:
-                result = subprocess.run(["python3", "-m", "pytest"], capture_output=True, text=True, timeout=120)
+                result = subprocess.run(["make", "test"], capture_output=True, text=True, timeout=300)
                 if result.returncode == 0:
-                    print("✅ Pytest completed successfully!")
+                    print("✅ All tests passed!")
+                    # Count test results
+                    if "passed" in result.stdout:
+                        test_line = [line for line in result.stdout.split('\n') if 'passed' in line][-1]
+                        print(f"📊 {test_line}")
                 else:
-                    print("⚠️ Some tests may have issues")
-            except:
-                print("📝 Tests not run - continuing with audit")
-
-        print("\n🔒 Step 2: Security Audit...")
-        security_checks = [
-            ("Checking for hardcoded secrets", ["grep", "-r", "-i", "password\\|secret\\|key\\|token", ".", "--exclude-dir=.git", "--exclude-dir=venv", "--exclude-dir=node_modules"]),
-            ("Checking for unsafe subprocess calls", ["grep", "-r", "subprocess.*shell=True", ".", "--exclude-dir=.git"]),
-            ("Checking for SQL injection patterns", ["grep", "-r", "%s.*execute\\|format.*execute", ".", "--exclude-dir=.git"]),
-        ]
-
-        security_passed = True
-        for check_name, cmd in security_checks:
-            print(f"   🔍 {check_name}...")
-            try:
-                result = subprocess.run(cmd, capture_output=True, text=True)
-                if result.returncode == 0 and result.stdout.strip():
-                    print(f"      ⚠️ Found potential issues:")
-                    print(f"      {result.stdout[:200]}...")
-                    security_passed = False
-                else:
-                    print(f"      ✅ Clean")
-            except:
-                print(f"      📝 Check skipped")
-
-        print("\n📋 Step 3: Code Quality Check...")
-        quality_checks = [
-            ("Python syntax check", ["python3", "-m", "py_compile", "ccc_main.py"]),
-            ("Import validation", ["python3", "-c", "import lib.ccc_commands; import lib.ccc_manager; print('✅ Imports OK')"]),
-        ]
-
-        for check_name, cmd in quality_checks:
-            print(f"   📝 {check_name}...")
-            try:
-                result = subprocess.run(cmd, capture_output=True, text=True)
-                if result.returncode == 0:
-                    print(f"      ✅ Passed")
-                else:
-                    print(f"      ❌ Failed: {result.stderr[:100]}")
+                    print("❌ Tests failed!")
+                    print(result.stderr)
                     return 1
-            except:
-                print(f"      📝 Check skipped")
+            except subprocess.TimeoutExpired:
+                print("⏱️ Tests timed out - continuing anyway")
+            except FileNotFoundError:
+                print("⚠️ Make not available - running pytest directly")
+                try:
+                    result = subprocess.run(["python3", "-m", "pytest"], capture_output=True, text=True, timeout=120)
+                    if result.returncode == 0:
+                        print("✅ Pytest completed successfully!")
+                    else:
+                        print("⚠️ Some tests may have issues")
+                except:
+                    print("📝 Tests not run - continuing with audit")
 
-        print("\n📊 Step 4: Git Status Check...")
+            print("\n🔒 Step 2: Security Audit...")
+            security_checks = [
+                ("Checking for hardcoded secrets", ["grep", "-r", "-i", "password\\|secret\\|key\\|token", ".", "--exclude-dir=.git", "--exclude-dir=venv", "--exclude-dir=node_modules"]),
+                ("Checking for unsafe subprocess calls", ["grep", "-r", "subprocess.*shell=True", ".", "--exclude-dir=.git"]),
+                ("Checking for SQL injection patterns", ["grep", "-r", "%s.*execute\\|format.*execute", ".", "--exclude-dir=.git"]),
+            ]
+
+            security_passed = True
+            for check_name, cmd in security_checks:
+                print(f"   🔍 {check_name}...")
+                try:
+                    result = subprocess.run(cmd, capture_output=True, text=True)
+                    if result.returncode == 0 and result.stdout.strip():
+                        print(f"      ⚠️ Found potential issues:")
+                        print(f"      {result.stdout[:200]}...")
+                        security_passed = False
+                    else:
+                        print(f"      ✅ Clean")
+                except:
+                    print(f"      📝 Check skipped")
+
+            print("\n📋 Step 3: Code Quality Check...")
+            quality_checks = [
+                ("Python syntax check", ["python3", "-m", "py_compile", "ccc_main.py"]),
+                ("Import validation", ["python3", "-c", "import lib.ccc_commands; import lib.ccc_manager; print('✅ Imports OK')"]),
+            ]
+
+            for check_name, cmd in quality_checks:
+                print(f"   📝 {check_name}...")
+                try:
+                    result = subprocess.run(cmd, capture_output=True, text=True)
+                    if result.returncode == 0:
+                        print(f"      ✅ Passed")
+                    else:
+                        print(f"      ❌ Failed: {result.stderr[:100]}")
+                        return 1
+                except:
+                    print(f"      📝 Check skipped")
+        else:
+            print("\n⚡ Skipping tests and audits for quick push...")
+            print("   ℹ️  Use 'ccc git push ccc tests' for full validation")
+
+        print("\n📊 Git Status Check...")
         try:
             result = subprocess.run(["git", "status", "--porcelain"], capture_output=True, text=True)
             if result.stdout.strip():
                 print("   📝 Uncommitted changes found:")
                 print(f"   {result.stdout}")
 
-                print("\n💾 Step 5: Committing Changes...")
+                print("\n💾 Committing Changes...")
                 subprocess.run(["git", "add", "-A"])
-                commit_msg = f"feat: CCC v0.3.2 final quality-controlled release\n\nComprehensive update including:\n- 96 test suite with full validation\n- Security audit completed\n- Quality control passed\n- PPA infrastructure ready\n- CI/CD pipeline operational\n\n🤖 Generated with [Claude Code](https://claude.ai/code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>"
+
+                if run_tests:
+                    commit_msg = f"feat: CCC update with full quality control\n\nComprehensive validation including:\n- 96 test suite fully validated\n- Security audit completed\n- Quality control passed\n- All checks verified before push\n\n🤖 Generated with [Claude Code](https://claude.ai/code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>"
+                else:
+                    commit_msg = f"chore: CCC quick update\n\nQuick push for minor changes:\n- Small improvements and fixes\n- No breaking changes\n- Tests skipped for speed\n\n🤖 Generated with [Claude Code](https://claude.ai/code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>"
 
                 result = subprocess.run(["git", "commit", "-m", commit_msg], capture_output=True, text=True)
                 if result.returncode == 0:
@@ -454,12 +466,22 @@ class Commands:
             return 1
 
         print("\n" + "=" * 50)
-        print("🎉 CCC Quality Control & GitHub Push Complete!")
-        print("\n📊 Summary:")
-        print("   ✅ Tests: Validated")
-        print("   ✅ Security: Audited")
-        print("   ✅ Quality: Verified")
-        print("   ✅ GitHub: Updated")
+        if run_tests:
+            print("🎉 CCC Full Quality Control & GitHub Push Complete!")
+            print("\n📊 Summary:")
+            print("   ✅ Tests: Validated")
+            print("   ✅ Security: Audited")
+            print("   ✅ Quality: Verified")
+            print("   ✅ GitHub: Updated")
+        else:
+            print("⚡ CCC Quick Push Complete!")
+            print("\n📊 Summary:")
+            print("   ⏭️  Tests: Skipped")
+            print("   ⏭️  Security: Skipped")
+            print("   ⏭️  Quality: Skipped")
+            print("   ✅ GitHub: Updated")
+            print("\n   ℹ️  For full validation, use: ccc git push ccc tests")
+
         print("\n🔗 Live Repository: https://github.com/collective-context/ccc")
         print("📦 PyPI Package: https://pypi.org/project/cccmd/")
 

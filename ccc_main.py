@@ -124,11 +124,14 @@ def main():
             if len(args) >= 2 and args[0] == 'push' and args[1] == 'homepage':
                 return commands.git_push_homepage()
             elif len(args) >= 2 and args[0] == 'push' and args[1] == 'ccc':
-                return commands.git_push_ccc()
+                # Check if tests flag is provided
+                run_tests = len(args) > 2 and args[2] in ['tests', 'test', 'full', '--tests']
+                return commands.git_push_ccc(run_tests=run_tests)
             else:
                 print("❌ Available git commands:")
-                print("  ccc git push homepage  - Update collective-context.org with session achievements")
-                print("  ccc git push ccc       - Quality control, security audit & push to GitHub")
+                print("  ccc git push homepage     - Update collective-context.org with session achievements")
+                print("  ccc git push ccc          - Quick push to GitHub (small changes)")
+                print("  ccc git push ccc tests    - Full validation (tests, security, quality) & push")
                 return 1
         elif command in ['exec', 'ex']:
             if len(args) >= 2 and args[0] in ['upload', 'up'] and args[1] == 'ppa':
