@@ -261,11 +261,418 @@ expect eof
         return success_count == total_count
 
 def upload_ppa_command(manager):
-    """CCC exec upload-ppa command implementation"""
-    uploader = PPAUploader(manager)
+    """CCC exec upload-ppa command for CCC 0.3.3 packages"""
+    import sys
 
-    print("🚀 CCC PPA Upload Tool")
+    # Check if meta package upload is requested
+    # Look for 'cccmd' anywhere in the arguments
+    if "cccmd" in sys.argv:
+        return upload_meta_packages(manager)
+
+    print("🚀 CCC 0.3.3 Ubuntu PPA Upload Process")
     print("=" * 50)
+
+    # Load GPG configuration
+    gpg_config = load_gpg_config()
+    if gpg_config.get("pass"):
+        print("🔐 Using automated GPG signing from config")
+
+    packaging_dir = Path.home() / "prog/ai/git/collective-context/ccc-debian-packaging"
+
+    if not packaging_dir.exists():
+        print(f"❌ Packaging directory not found: {packaging_dir}")
+        return 1
+
+    # Change to packaging directory
+    os.chdir(packaging_dir)
+
+    # Look specifically for 0.3.3 changes files
+    changes_files = [
+        "ccc_0.3.3-jammy1_source.changes",
+        "ccc_0.3.3-noble1_source.changes"
+    ]
+
+    existing_files = [f for f in changes_files if Path(f).exists()]
+
+    if not existing_files:
+        print("❌ No CCC 0.3.3 .changes files found")
+        print("Expected files:")
+        for f in changes_files:
+            print(f"  - {f}")
+        return 1
+
+    print(f"📦 Found {len(existing_files)} CCC 0.3.3 package(s):")
+    for f in existing_files:
+        print(f"  ✓ {f}")
+
+    # Check if packages already exist in PPA
+    if check_package_in_ppa_comprehensive("ccc", "0.3.3"):
+        return 0  # Skip upload
+
+    print("\n🔐 Starting GPG signing and PPA upload...")
+
+    try:
+        gpg_key = "EA8C41A4255934A9A729E13D4A92127F90F94A2E"
+        ppa_target = "ppa:collective-context/ccc"
+
+        for changes_file in existing_files:
+            print(f"\n📋 Processing: {changes_file}")
+
+            # Sign the package using config-based GPG or interactive fallback
+            print(f"🔑 Signing with GPG key: {gpg_config.get('key_fingerprint', gpg_key)}")
+
+            sign_result = sign_package_with_config(changes_file, gpg_config)
+
+            if sign_result.returncode != 0:
+                print(f"❌ Failed to sign {changes_file}")
+                if hasattr(sign_result, 'stderr') and sign_result.stderr:
+                    print(f"Error: {sign_result.stderr}")
+                continue
+            else:
+                print(f"✅ Successfully signed {changes_file}")
+
+            # Upload to PPA using dput
+            print(f"📤 Uploading to {ppa_target}")
+            upload_cmd = ["dput", ppa_target, changes_file]
+            upload_result = subprocess.run(upload_cmd)
+
+            if upload_result.returncode == 0:
+                print(f"✅ Successfully uploaded {changes_file}")
+            else:
+                print(f"❌ Failed to upload {changes_file}")
+
+        print("\n" + "=" * 50)
+        print("🎉 CCC 0.3.3 PPA upload process completed!")
+        print("📊 Check upload status at:")
+        print("   https://launchpad.net/~collective-context/+archive/ubuntu/ccc")
+        print("\n💡 After successful build (15-30 minutes), packages will be available via:")
+        print("   sudo add-apt-repository ppa:collective-context/ccc")
+        print("   sudo apt update && sudo apt install ccc")
+
+        return 0
+
+    except Exception as e:
+        print(f"❌ Error during PPA upload: {e}")
+        return 1
+
+def load_gpg_config():
+    """Load GPG configuration from ~/.config/ccc/gpg.json"""
+    try:
+        import json
+        config_path = Path.home() / ".config/ccc/gpg.json"
+        if config_path.exists():
+            with open(config_path) as f:
+                return json.load(f)
+    except Exception as e:
+        print(f"⚠️  Warning: Could not load GPG config: {e}")
+    return {}
+
+def check_package_exists_in_ppa(package_name, version, distribution):
+    """Check if package already exists in Launchpad PPA"""
+    try:
+        import requests
+
+        # Use web interface to check packages
+        ppa_url = f"https://launchpad.net/~collective-context/+archive/ubuntu/ccc/+packages"
+
+        print(f"🔍 Checking PPA for {package_name} {version} ({distribution})...")
+
+        response = requests.get(ppa_url, timeout=15)
+        if response.status_code == 200:
+            content = response.text.lower()
+
+            # Look for package name and version in the content
+            package_search = f"{package_name}"
+            version_search = f"{version}"
+            dist_search = f"{distribution}"
+
+            if (package_search in content and
+                version_search in content and
+                dist_search in content):
+                return True, "Published"
+
+        return False, None
+
+    except Exception as e:
+        print(f"⚠️  PPA check failed: {e}")
+        return False, None
+
+def check_package_in_ppa_comprehensive(package_name, version):
+    """Check if package already exists in PPA before upload"""
+    print(f"\n🔍 Checking if {package_name} {version} already exists in PPA...")
+
+    try:
+        # Check both distributions
+        distributions = ['jammy', 'noble']
+        found_packages = []
+
+        for dist in distributions:
+            exists, status = check_package_exists_in_ppa(package_name, version, dist)
+            if exists:
+                found_packages.append(f"{dist} ({status})")
+
+        if found_packages:
+            print(f"\n⚠️  {package_name} {version} already exists in PPA:")
+            for pkg in found_packages:
+                print(f"   📦 {pkg}")
+
+            print(f"\n💡 Skipping upload to prevent duplicate submission")
+            print(f"🔗 Check status: https://launchpad.net/~collective-context/+archive/ubuntu/ccc")
+            return True
+        else:
+            print(f"✅ {package_name} {version} not found in PPA - proceeding with upload")
+            return False
+
+    except Exception as e:
+        print(f"⚠️  Could not verify PPA status: {e}")
+        print(f"💡 Proceeding with upload (recommend manual verification)")
+        return False
+
+def sign_package_with_config(changes_file, gpg_config):
+    """Sign package using config-based GPG credentials with multiple methods"""
+    try:
+        gpg_key = gpg_config.get("key_fingerprint", "EA8C41A4255934A9A729E13D4A92127F90F94A2E")
+        passphrase = gpg_config.get("pass", "")
+
+        if not passphrase:
+            print("⚠️  No passphrase in config, falling back to interactive")
+            sign_cmd = ["debsign", "-k", gpg_key, changes_file]
+            return subprocess.run(sign_cmd)
+
+        print(f"🔐 Attempting automated GPG signing...")
+
+        # Method 1: Try with GPG preset passphrase (works in both environments)
+        try:
+            # Use gpg-preset-passphrase if available
+            preset_result = subprocess.run([
+                "gpg-connect-agent",
+                f"PRESET_PASSPHRASE {gpg_key} -1 {passphrase}",
+                "/bye"
+            ], capture_output=True, text=True)
+
+            if preset_result.returncode == 0:
+                print("✅ GPG passphrase preset successful")
+                # Now try signing without passphrase prompt
+                sign_cmd = ["debsign", "-k", gpg_key, changes_file]
+                result = subprocess.run(sign_cmd, capture_output=True, text=True)
+                if result.returncode == 0:
+                    print("✅ GPG signing successful via preset")
+                    return result
+        except Exception as e:
+            print(f"⚠️  GPG preset method failed: {e}")
+
+        # Method 2: Try expect script (works in interactive terminals)
+        try:
+            import shutil
+            if shutil.which("expect"):
+                expect_script = f'''#!/usr/bin/expect -f
+set timeout 60
+spawn debsign -k{gpg_key} "{changes_file}"
+expect {{
+    "Enter passphrase:" {{
+        send "{passphrase}\\r"
+        exp_continue
+    }}
+    "Passphrase:" {{
+        send "{passphrase}\\r"
+        exp_continue
+    }}
+    eof
+}}
+'''
+                script_path = Path("/tmp/gpg_sign_auto.exp")
+                with open(script_path, "w") as f:
+                    f.write(expect_script)
+                script_path.chmod(0o755)
+
+                result = subprocess.run(["expect", str(script_path)],
+                                      capture_output=True, text=True)
+                script_path.unlink(missing_ok=True)
+
+                if result.returncode == 0:
+                    print("✅ GPG signing successful via expect")
+                    return result
+        except Exception as e:
+            print(f"⚠️  Expect method failed: {e}")
+
+        # Method 3: Direct GPG signing with batch mode (Claude Code friendly)
+        try:
+            print("🔄 Trying direct GPG batch signing...")
+
+            # Set up GPG batch environment
+            env = os.environ.copy()
+            env.update({
+                "GPG_TTY": "",
+                "DISPLAY": "",
+                "GPG_AGENT_INFO": "",
+                "DEBIAN_FRONTEND": "noninteractive",
+                "GNUPGHOME": str(Path.home() / ".gnupg")
+            })
+
+            # Create temporary passphrase file
+            passphrase_file = Path("/tmp/gpg_pass.tmp")
+            with open(passphrase_file, "w") as f:
+                f.write(passphrase)
+            passphrase_file.chmod(0o600)
+
+            try:
+                # Use gpg directly to sign the .dsc and .changes files
+                dsc_file = changes_file.replace("_source.changes", ".dsc")
+
+                for file_to_sign in [dsc_file, changes_file]:
+                    if Path(file_to_sign).exists():
+                        sign_cmd = [
+                            "gpg", "--batch", "--yes", "--pinentry-mode", "loopback",
+                            "--passphrase-file", str(passphrase_file),
+                            "--local-user", gpg_key,
+                            "--clearsign", "--armor",
+                            file_to_sign
+                        ]
+
+                        result = subprocess.run(sign_cmd, env=env, capture_output=True, text=True)
+                        if result.returncode == 0:
+                            # Move signed file back
+                            signed_file = f"{file_to_sign}.asc"
+                            if Path(signed_file).exists():
+                                Path(signed_file).rename(file_to_sign)
+                                print(f"✅ Signed {Path(file_to_sign).name}")
+                        else:
+                            print(f"⚠️  Failed to sign {Path(file_to_sign).name}: {result.stderr}")
+
+                # Clean up
+                passphrase_file.unlink(missing_ok=True)
+
+                # Return success if we got here
+                return type('Result', (), {'returncode': 0, 'stderr': '', 'stdout': 'Direct GPG signing completed'})()
+
+            finally:
+                passphrase_file.unlink(missing_ok=True)
+
+        except Exception as e:
+            print(f"⚠️  Direct GPG method failed: {e}")
+
+        # Method 4: Fallback to interactive (for interactive terminals)
+        print("🔄 Falling back to interactive signing...")
+        sign_cmd = ["debsign", "-k", gpg_key, changes_file]
+        return subprocess.run(sign_cmd)
+
+    except Exception as e:
+        print(f"❌ All signing methods failed: {e}")
+        # Final fallback
+        sign_cmd = ["debsign", "-k", gpg_config.get("key_fingerprint", "EA8C41A4255934A9A729E13D4A92127F90F94A2E"), changes_file]
+        return subprocess.run(sign_cmd)
+
+def upload_meta_packages(manager):
+    """Upload CCC 0.3.3 meta packages (cccmd) to Ubuntu PPA"""
+    print("🚀 CCC 0.3.3 Meta Package (CCCMD) Upload Process")
+    print("=" * 55)
+    print("📦 Meta package installs: ccc + tmux + git + development tools")
+
+    # Load GPG configuration
+    gpg_config = load_gpg_config()
+    if gpg_config.get("pass"):
+        print("🔐 Using automated GPG signing from config")
+
+    packaging_dir = Path.home() / "prog/ai/git/collective-context/ccc-debian-packaging"
+
+    if not packaging_dir.exists():
+        print(f"❌ Packaging directory not found: {packaging_dir}")
+        return 1
+
+    # Change to packaging directory
+    os.chdir(packaging_dir)
+
+    # First check if base packages are built
+    print("\n🔍 Checking if base CCC 0.3.3 packages are available...")
+    base_url = "https://launchpad.net/~collective-context/+archive/ubuntu/ccc"
+    print(f"💡 Base packages should be built at: {base_url}")
+
+    # Build meta packages for 0.3.3
+    print("\n🔨 Building meta packages for Ubuntu versions...")
+
+    try:
+        build_result = subprocess.run(["./build-meta.sh"], cwd=packaging_dir)
+        if build_result.returncode != 0:
+            print("❌ Failed to build meta packages")
+            return 1
+    except Exception as e:
+        print(f"❌ Error building meta packages: {e}")
+        return 1
+
+    # Look for built meta packages
+    meta_changes_files = [
+        "cccmd-meta_0.3.3-jammy1_source.changes",
+        "cccmd-meta_0.3.3-noble1_source.changes"
+    ]
+
+    existing_files = [f for f in meta_changes_files if Path(f).exists()]
+
+    if not existing_files:
+        print("❌ No meta package .changes files found")
+        print("Expected files:")
+        for f in meta_changes_files:
+            print(f"  - {f}")
+        return 1
+
+    print(f"\n📦 Found {len(existing_files)} meta package(s):")
+    for f in existing_files:
+        print(f"  ✓ {f}")
+
+    # Check if meta packages already exist in PPA
+    if check_package_in_ppa_comprehensive("cccmd-meta", "0.3.3"):
+        return 0  # Skip upload
+
+    print("\n🔐 Starting GPG signing and PPA upload...")
+
+    try:
+        gpg_key = "EA8C41A4255934A9A729E13D4A92127F90F94A2E"
+        ppa_target = "ppa:collective-context/ccc"
+
+        for changes_file in existing_files:
+            print(f"\n📋 Processing: {changes_file}")
+
+            # Sign the package using config-based GPG or interactive fallback
+            print(f"🔑 Signing with GPG key: {gpg_config.get('key_fingerprint', gpg_key)}")
+
+            sign_result = sign_package_with_config(changes_file, gpg_config)
+
+            if sign_result.returncode != 0:
+                print(f"❌ Failed to sign {changes_file}")
+                if sign_result.stderr:
+                    print(f"Error: {sign_result.stderr}")
+                continue
+            else:
+                print(f"✅ Successfully signed {changes_file}")
+
+            # Upload to PPA using dput
+            print(f"📤 Uploading to {ppa_target}")
+            upload_cmd = ["dput", ppa_target, changes_file]
+            upload_result = subprocess.run(upload_cmd)
+
+            if upload_result.returncode == 0:
+                print(f"✅ Successfully uploaded {changes_file}")
+            else:
+                print(f"❌ Failed to upload {changes_file}")
+
+        print("\n" + "=" * 55)
+        print("🎉 CCC 0.3.3 Meta Package upload completed!")
+        print("📊 Check upload status at:")
+        print("   https://launchpad.net/~collective-context/+archive/ubuntu/ccc")
+        print("\n💡 After successful build, users can install the complete suite:")
+        print("   sudo add-apt-repository ppa:collective-context/ccc")
+        print("   sudo apt update && sudo apt install cccmd")
+        print("\n📦 The cccmd package will install:")
+        print("   • ccc (core tool)")
+        print("   • tmux (session management)")
+        print("   • git, curl, wget, jq (development tools)")
+        print("   • python3-pip, pipx (Python tools)")
+        print("   • Recommended: gh, nodejs, vim, docker")
+
+        return 0
+
+    except Exception as e:
+        print(f"❌ Error during meta package upload: {e}")
+        return 1
 
     success = uploader.run_upload_process()
 

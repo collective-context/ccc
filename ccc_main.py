@@ -355,10 +355,27 @@ def handle_exec_command(expanded_commands, manager):
             from ccc_ultimate_gpg_fix import fix_all_packages
             fix_all_packages()
             return 0
+        elif expanded_commands[1] == 'upload' and expanded_commands[2] == 'meta':
+            from ccc_ppa_upload import upload_meta_packages
+            return upload_meta_packages(manager)
+        elif len(expanded_commands) >= 4 and expanded_commands[1] == 'upload' and expanded_commands[2] == 'ppa':
+            # Handle "exec upload ppa ccc" and "exec upload ppa cccmd"
+            target = expanded_commands[3] if len(expanded_commands) > 3 else None
+            if target == 'cccmd':
+                from ccc_ppa_upload import upload_meta_packages
+                return upload_meta_packages(manager)
+            elif target == 'ccc':
+                return upload_ppa_command(manager)
+            else:
+                # Default to regular PPA upload
+                return upload_ppa_command(manager)
 
     print("❌ Available exec commands:")
-    print("  ex[ec] up[load] pp[a]    - Upload packages to PPA")
-    print("  ex[ec] fi[x] gp[g]       - ULTIMATE GPG signature fix")
+    print("  ex[ec] up[load] pp[a]         - Upload base packages to PPA")
+    print("  ex[ec] up[load] pp[a] cc[c]   - Upload base packages to PPA")
+    print("  ex[ec] up[load] pp[a] cccmd   - Upload meta packages to PPA")
+    print("  ex[ec] up[load] me[ta]        - Upload meta packages (alias)")
+    print("  ex[ec] fi[x] gp[g]            - ULTIMATE GPG signature fix")
     return 1
 
 

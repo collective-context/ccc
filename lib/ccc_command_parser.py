@@ -30,6 +30,8 @@ class CommandParser:
             'mode': ['mo', 'mod', 'mode'],
             'homepage': ['ho', 'hom', 'home', 'homep', 'homepa', 'homepag', 'homepage'],
             'ppa': ['pp', 'ppa'],
+            'meta': ['me', 'met', 'meta'],
+            'cccmd': ['cccmd'],
             'ccc': ['cc', 'ccc'],  # can be command or target
             'version': ['ve', 'ver', 'vers', 'versi', 'versio', 'version'],
             'fix': ['fi', 'fix'],
@@ -188,6 +190,9 @@ class CommandParser:
             ['git', 'push', 'ccc', 'tests'],
             ['git', 'push', 'ccc', 'full'],
             ['exec', 'upload', 'ppa'],
+            ['exec', 'upload', 'ppa', 'ccc'],
+            ['exec', 'upload', 'ppa', 'cccmd'],
+            ['exec', 'upload', 'meta'],
             ['exec', 'fix', 'gpg'],
         ]
 
