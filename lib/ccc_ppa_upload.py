@@ -275,3 +275,44 @@ def upload_ppa_command(manager):
     else:
         print("❌ Some packages failed to upload. Check logs for details.")
         return 1
+
+if __name__ == "__main__":
+    """CLI entry point for standalone usage"""
+    import sys
+    import argparse
+    from pathlib import Path
+
+    # Mock manager for standalone usage
+    class MockManager:
+        def log(self, message, level="INFO"):
+            print(f"[{level}] {message}")
+
+    parser = argparse.ArgumentParser(description="Upload CCC packages to Ubuntu PPA")
+    parser.add_argument("--dry-run", action="store_true", help="Show what would be uploaded without actually uploading")
+    parser.add_argument("--check", action="store_true", help="Check packages and signing status only")
+    args = parser.parse_args()
+
+    manager = MockManager()
+    uploader = PPAUploader(manager)
+
+    if args.check:
+        print("🔍 Checking packages...")
+        packages = uploader.check_packages()
+        if packages:
+            for pkg in packages:
+                status = "✅ SIGNED" if pkg['signed'] else "❌ NOT SIGNED"
+                print(f"  {pkg['file']} - {status}")
+        else:
+            print("❌ No packages found. Run scripts/build-deb.sh first!")
+        sys.exit(0)
+
+    if args.dry_run:
+        print("🔍 DRY RUN - Would upload these packages:")
+        packages = uploader.check_packages()
+        for pkg in packages:
+            print(f"  📦 {pkg['file']}")
+        sys.exit(0)
+
+    # Regular upload
+    result = upload_ppa_command(manager)
+    sys.exit(result)

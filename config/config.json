@@ -20,5 +20,14 @@
       "description": "Claude Self-Logging with optional tmux dialog monitoring"
     }
   },
-  "log_level": "INFO"
+  "log_level": "INFO",
+  "version_management": {
+    "preferred_mode": "apt",
+    "available_modes": {
+      "dev": "/usr/local/bin/ccc",
+      "pipx": "/home/mayer/.local/bin/ccc",
+      "apt": "/usr/bin/ccc"
+    }
+  },
+  "_config_source": "/home/mayer/.config/ccc/config.json"
 }

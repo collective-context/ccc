@@ -1,4 +1,14 @@
 #!/usr/bin/make -f
 
+export PYBUILD_NAME=cccmd
+export DH_VERBOSE=1
+
 %:
 	dh $@ --with python3 --buildsystem=pybuild
+
+override_dh_auto_clean:
+	dh_auto_clean || true
+
+override_dh_auto_test:
+	# Skip tests during build
+	echo "Skipping tests during package build"

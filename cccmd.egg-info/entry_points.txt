@@ -1,0 +1,3 @@
+[console_scripts]
+ccc = ccc_main:main
+cccmd = ccc_main:main

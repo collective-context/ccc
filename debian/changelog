@@ -1,3 +1,16 @@
+cccmd (0.3.2-1) jammy; urgency=medium
+
+  * Comprehensive test suite with 96 tests
+  * GitHub Actions CI/CD pipeline with matrix testing
+  * Security scanning infrastructure (bandit, safety, pip-audit)
+  * Automated PyPI deployment workflow
+  * PPA upload tools for Ubuntu distribution
+  * Enhanced build automation with Makefile
+  * Security hardening with input validation
+  * Command injection and path traversal prevention
+
+ -- Collective Context Team <team@collective-context.org>  Tue, 17 Sep 2025 22:00:00 +0100
+
 cccmd (0.3.0-1) jammy; urgency=medium
 
   * Initial release

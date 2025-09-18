@@ -120,6 +120,16 @@ def main():
                 commands.handle_session_command(args)
             else:
                 commands.handle_session_command([])
+        elif command in ['git']:
+            if len(args) >= 2 and args[0] == 'push' and args[1] == 'homepage':
+                return commands.git_push_homepage()
+            elif len(args) >= 2 and args[0] == 'push' and args[1] == 'ccc':
+                return commands.git_push_ccc()
+            else:
+                print("❌ Available git commands:")
+                print("  ccc git push homepage  - Update collective-context.org with session achievements")
+                print("  ccc git push ccc       - Quality control, security audit & push to GitHub")
+                return 1
         elif command in ['exec', 'ex']:
             if len(args) >= 2 and args[0] in ['upload', 'up'] and args[1] == 'ppa':
                 return upload_ppa_command(manager)
