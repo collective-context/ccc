@@ -51,6 +51,7 @@ dev = [
 [project.scripts]
 ccc = "ccc_main:main"  # Hauptcommand ist 'ccc'
 cccmd = "ccc_main:main"  # Alias für Kompatibilität
+cc = "ccc_main:main"  # Kurzform für schnelle Eingabe
 
 [project.urls]
 Homepage = "https://collective-context.org"

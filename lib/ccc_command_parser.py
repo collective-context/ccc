@@ -16,6 +16,7 @@ class CommandParser:
             'session': ['se', 'ses', 'sess', 'sessi', 'sessio', 'session'],
             'context': ['co', 'con', 'cont', 'conte', 'contex', 'context'],
             'help': ['he', 'hel', 'help'],
+            'full': ['fu', 'ful', 'full'],
             'status': ['st', 'sta', 'stat', 'statu', 'status'],
             'start': ['st', 'sta', 'star', 'start'],
             'stop': ['st', 'sto', 'stop'],
@@ -144,9 +145,11 @@ class CommandParser:
         # Define valid command patterns
         valid_patterns = [
             ['help'],
+            ['help', 'full'],    # Support help full pattern
             ['version'],
             ['ccc', 'version'],  # Support ccc version pattern
             ['ccc', 'help'],     # Support ccc help pattern
+            ['ccc', 'help', 'full'],  # Support ccc help full pattern
             ['status'],
             ['config'],  # config alone is valid (shows config)
             ['config', 'show'],

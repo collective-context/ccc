@@ -119,21 +119,27 @@ def main():
 
     try:
         # Route commands to appropriate handlers
-        if expanded_commands[0] in ['help']:
-            print("CCC Commander (cccmd) v0.3.2 - Multi-Agent AI Orchestration")
-            print("\nVerfügbare Commands (mit flexiblen Abkürzungen):")
-            print("  ve[rsion]        - Zeige Version")
-            print("  he[lp]           - Zeige diese Hilfe")
-            print("  co[ntext]        - Context Management")
-            print("  se[ssion]        - Session Management")
-            print("  gi[t] pu[sh] ho[mepage]     - Update collective-context.org")
-            print("  gi[t] pu[sh] cc[c] [te[sts]] - Push to GitHub (optional: with tests)")
-            print("  ex[ec] up[load] pp[a]       - Upload packages to Ubuntu PPA")
-            print("  co[nfig] sh[ow]             - Show current configuration")
-            print("  co[nfig] -- set eMail=...   - Set email configuration")
-            print("\n💡 Mindestens 2 Buchstaben pro Befehl. Beispiel: 'cc gi pu ccc te'")
-            print("🔗 Für detaillierte Hilfe siehe: https://collective-context.org/ccc/")
-            return 0
+        if expanded_commands[0] == 'help' or (len(expanded_commands) >= 2 and expanded_commands[0] == 'ccc' and expanded_commands[1] == 'help'):
+            if len(expanded_commands) >= 2 and expanded_commands[-1] == 'full':
+                # Help full command - use file-based approach
+                return commands.help_write_and_read("full")
+            else:
+                # Standard help
+                print("CCC Commander (cccmd) v0.3.2 - Multi-Agent AI Orchestration")
+                print("\nVerfügbare Commands (mit flexiblen Abkürzungen):")
+                print("  ve[rsion]        - Zeige Version")
+                print("  he[lp]           - Zeige diese Hilfe")
+                print("  he[lp] fu[ll]    - Zeige vollständige Hilfe")
+                print("  co[ntext]        - Context Management")
+                print("  se[ssion]        - Session Management")
+                print("  gi[t] pu[sh] ho[mepage]     - Update collective-context.org")
+                print("  gi[t] pu[sh] cc[c] [te[sts]] - Push to GitHub (optional: with tests)")
+                print("  ex[ec] up[load] pp[a]       - Upload packages to Ubuntu PPA")
+                print("  co[nfig] sh[ow]             - Show current configuration")
+                print("  co[nfig] -- set eMail=...   - Set email configuration")
+                print("\n💡 Mindestens 2 Buchstaben pro Befehl. Beispiel: 'cc gi pu ccc te'")
+                print("🔗 Für detaillierte Hilfe siehe: https://collective-context.org/ccc/")
+                return 0
 
         elif expanded_commands[0] == 'version' or (len(expanded_commands) >= 2 and expanded_commands[0] == 'ccc' and expanded_commands[1] == 'version'):
             # Use file-based approach like help full
