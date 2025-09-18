@@ -14,6 +14,7 @@ sys.path.insert(0, str(Path(__file__).parent / "lib"))
 from ccc_manager import CCCManager
 from ccc_commands import Commands
 from ccc_ppa_upload import upload_ppa_command
+from ccc_command_parser import CommandParser
 
 def is_claude_code_environment():
     """Detect if running in Claude Code environment"""
@@ -74,90 +75,182 @@ TIP: Partial names work! (e.g., 'ccc help comm' for communication)
 """)
 
 def main():
-    """Entry point for pip/pipx installation - direct Python implementation"""
+    """Entry point for pip/pipx installation - flexible abbreviation system"""
     import sys
 
-    # Initialize CCC manager and commands
+    # Initialize CCC manager, commands, and parser
     manager = CCCManager()
     commands = Commands(manager)
+    parser = CommandParser()
 
     # Handle no arguments - show help
     if len(sys.argv) <= 1:
         print("CCC Commander (cccmd) v0.3.2 - Multi-Agent AI Orchestration")
-        print("\nVerfügbare Commands:")
-        print("  version          - Zeige Version")
-        print("  help             - Zeige diese Hilfe")
-        print("  context          - Context Management")
-        print("  session          - Session Management")
-        print("\nFür detaillierte Hilfe siehe: https://collective-context.org/ccc/")
+        print("\nVerfügbare Commands (mit flexiblen Abkürzungen):")
+        print("  ve[rsion]        - Zeige Version")
+        print("  he[lp]           - Zeige diese Hilfe")
+        print("  co[ntext]        - Context Management")
+        print("  se[ssion]        - Session Management")
+        print("  gi[t] pu[sh] ho[mepage]     - Update collective-context.org")
+        print("  gi[t] pu[sh] cc[c] [te[sts]] - Push to GitHub (optional: with tests)")
+        print("  ex[ec] up[load] pp[a]       - Upload packages to Ubuntu PPA")
+        print("  co[nfig] sh[ow]             - Show current configuration")
+        print("  co[nfig] -- set eMail=...   - Set email configuration")
+        print("\n💡 Mindestens 2 Buchstaben pro Befehl. Beispiel: 'cc gi pu ccc te'")
+        print("🔗 Für detaillierte Hilfe siehe: https://collective-context.org/ccc/")
         return 0
 
-    command = sys.argv[1]
-    args = sys.argv[2:] if len(sys.argv) > 2 else []
+    # Parse command with flexible abbreviations
+    original_args = sys.argv[1:]
+    expanded_commands, free_string, success = parser.parse_command(original_args)
+
+    if not success:
+        return 1
+
+    # Display expansion if commands were abbreviated
+    parser.display_expansion(original_args, expanded_commands, free_string)
+
+    # Validate command chain
+    if not parser.validate_command_chain(expanded_commands):
+        print(f"❌ Invalid command sequence: {' '.join(expanded_commands)}")
+        print("💡 Use 'ccc help' for valid command patterns")
+        return 1
 
     try:
         # Route commands to appropriate handlers
-        if command in ['help', 'h', '--help']:
+        if expanded_commands[0] in ['help']:
             print("CCC Commander (cccmd) v0.3.2 - Multi-Agent AI Orchestration")
-            print("\nVerfügbare Commands:")
-            print("  version          - Zeige Version")
-            print("  help             - Zeige diese Hilfe")
-            print("  context          - Context Management")
-            print("  session          - Session Management")
-            print("  exec upload ppa  - Upload packages to Ubuntu PPA")
-            print("  ex up ppa        - Upload packages (short form)")
-            print("\nFür detaillierte Hilfe siehe: https://collective-context.org/ccc/")
+            print("\nVerfügbare Commands (mit flexiblen Abkürzungen):")
+            print("  ve[rsion]        - Zeige Version")
+            print("  he[lp]           - Zeige diese Hilfe")
+            print("  co[ntext]        - Context Management")
+            print("  se[ssion]        - Session Management")
+            print("  gi[t] pu[sh] ho[mepage]     - Update collective-context.org")
+            print("  gi[t] pu[sh] cc[c] [te[sts]] - Push to GitHub (optional: with tests)")
+            print("  ex[ec] up[load] pp[a]       - Upload packages to Ubuntu PPA")
+            print("  co[nfig] sh[ow]             - Show current configuration")
+            print("  co[nfig] -- set eMail=...   - Set email configuration")
+            print("\n💡 Mindestens 2 Buchstaben pro Befehl. Beispiel: 'cc gi pu ccc te'")
+            print("🔗 Für detaillierte Hilfe siehe: https://collective-context.org/ccc/")
             return 0
-        elif command == 'version':
+
+        elif expanded_commands[0] == 'version':
             print("CCC Commander (cccmd) v0.3.2")
-        elif command in ['context', 'co']:
-            if args:
-                commands.handle_context_command(args)
+            return 0
+
+        elif expanded_commands[0] == 'config':
+            return handle_config_command(expanded_commands, free_string, manager)
+
+        elif expanded_commands[0] == 'context':
+            if len(expanded_commands) > 1:
+                commands.handle_context_command(expanded_commands[1:])
             else:
                 commands.handle_context_command([])
-        elif command in ['session', 'ses']:
-            if args:
-                commands.handle_session_command(args)
+            return 0
+
+        elif expanded_commands[0] == 'session':
+            if len(expanded_commands) > 1:
+                commands.handle_session_command(expanded_commands[1:])
             else:
                 commands.handle_session_command([])
-        elif command in ['git']:
-            if len(args) >= 2 and args[0] == 'push' and args[1] == 'homepage':
-                return commands.git_push_homepage()
-            elif len(args) >= 2 and args[0] == 'push' and args[1] == 'ccc':
-                # Check if tests flag is provided
-                run_tests = len(args) > 2 and args[2] in ['tests', 'test', 'full', '--tests']
-                return commands.git_push_ccc(run_tests=run_tests)
-            else:
-                print("❌ Available git commands:")
-                print("  ccc git push homepage     - Update collective-context.org with session achievements")
-                print("  ccc git push ccc          - Quick push to GitHub (small changes)")
-                print("  ccc git push ccc tests    - Full validation (tests, security, quality) & push")
-                return 1
-        elif command in ['exec', 'ex']:
-            if len(args) >= 2 and args[0] in ['upload', 'up'] and args[1] == 'ppa':
-                return upload_ppa_command(manager)
-            elif len(args) >= 2 and args[0] in ['fix', 'fx'] and args[1] == 'gpg':
-                # ULTIMATE GPG FIX
-                from ccc_ultimate_gpg_fix import fix_all_packages
-                fix_all_packages()
-                return 0
-            else:
-                print("❌ Available exec commands:")
-                print("  ccc exec upload ppa    - Upload packages to PPA")
-                print("  ccc ex up ppa          - Upload packages to PPA (short)")
-                print("  ccc exec fix gpg       - ULTIMATE GPG signature fix")
-                print("  ccc ex fx gpg          - ULTIMATE GPG fix (short)")
-                return 1
-        else:
-            print(f"❌ Unknown command: {command}")
-            print("Use 'cccmd help' for available commands")
-            return 1
+            return 0
 
-        return 0
+        elif expanded_commands[0] == 'git':
+            return handle_git_command(expanded_commands, free_string, commands)
+
+        elif expanded_commands[0] == 'exec':
+            return handle_exec_command(expanded_commands, manager)
+
+        else:
+            print(f"❌ Unknown command: {expanded_commands[0]}")
+            print("Use 'ccc help' for available commands")
+            return 1
 
     except Exception as e:
         print(f"❌ Error: {e}")
         return 1
+
+def handle_config_command(expanded_commands, free_string, manager):
+    """Handle config commands with free string support"""
+    if len(expanded_commands) == 1 or (len(expanded_commands) == 2 and expanded_commands[1] == 'show'):
+        # Show current configuration
+        print("\n📋 CCC Configuration")
+        print("=" * 50)
+
+        config_file = manager.config.get('_config_source', 'Unknown')
+        print(f"📁 Config file: {config_file}")
+
+        # Show email if configured
+        email = manager.config.get('email', 'Not configured')
+        print(f"📧 Email: {email}")
+
+        # Show version management
+        vm = manager.config.get('version_management', {})
+        preferred_mode = vm.get('preferred_mode', 'Unknown')
+        print(f"🔧 Preferred mode: {preferred_mode}")
+
+        print("=" * 50)
+        return 0
+
+    elif free_string:
+        # Handle config set commands from free string
+        if free_string.startswith('set '):
+            set_command = free_string[4:]  # Remove 'set '
+
+            if '=' in set_command:
+                key, value = set_command.split('=', 1)
+                key = key.strip()
+                value = value.strip().strip('"\'')
+
+                if key == 'eMail' or key == 'email':
+                    manager.config['email'] = value
+                    manager.save_config()
+                    print(f"✅ Email configured: {value}")
+                    return 0
+                else:
+                    print(f"❌ Unknown config key: {key}")
+                    print("Available keys: eMail")
+                    return 1
+            else:
+                print("❌ Invalid set command. Use: config -- set eMail=\"your@email.com\"")
+                return 1
+        else:
+            print("❌ Invalid config command. Use: config -- set key=value")
+            return 1
+    else:
+        print("❌ Config command requires 'show' or '-- set key=value'")
+        return 1
+
+def handle_git_command(expanded_commands, free_string, commands):
+    """Handle git commands"""
+    if len(expanded_commands) >= 3 and expanded_commands[1] == 'push':
+        if expanded_commands[2] == 'homepage':
+            return commands.git_push_homepage(free_string)
+        elif expanded_commands[2] == 'ccc':
+            # Check if tests flag is provided
+            run_tests = len(expanded_commands) > 3 and expanded_commands[3] in ['test', 'tests', 'full']
+            return commands.git_push_ccc(run_tests=run_tests, message=free_string)
+
+    print("❌ Available git commands:")
+    print("  gi[t] pu[sh] ho[mepage]     - Update collective-context.org")
+    print("  gi[t] pu[sh] cc[c]          - Quick push to GitHub")
+    print("  gi[t] pu[sh] cc[c] te[sts]  - Full validation & push")
+    return 1
+
+def handle_exec_command(expanded_commands, manager):
+    """Handle exec commands"""
+    if len(expanded_commands) >= 3:
+        if expanded_commands[1] == 'upload' and expanded_commands[2] == 'ppa':
+            return upload_ppa_command(manager)
+        elif expanded_commands[1] == 'fix' and expanded_commands[2] == 'gpg':
+            from ccc_ultimate_gpg_fix import fix_all_packages
+            fix_all_packages()
+            return 0
+
+    print("❌ Available exec commands:")
+    print("  ex[ec] up[load] pp[a]    - Upload packages to PPA")
+    print("  ex[ec] fi[x] gp[g]       - ULTIMATE GPG signature fix")
+    return 1
 
 if __name__ == "__main__":
     sys.exit(main())

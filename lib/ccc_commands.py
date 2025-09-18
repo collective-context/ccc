@@ -315,7 +315,7 @@ class Commands:
             print("❌ Failed to send command!")
             return 1
 
-    def git_push_homepage(self):
+    def git_push_homepage(self, message=None):
         """Analyze session achievements and update collective-context.org"""
         print("🌐 CCC Homepage Update Tool")
         print("=" * 50)
@@ -328,6 +328,9 @@ class Commands:
         print("   - CI/CD Pipeline Setup")
         print("   - PPA Packaging Infrastructure")
         print("   - Security Hardening")
+        if message:
+            print(f"\n📝 Additional request: {message}")
+
         print("\n🎯 Now updating collective-context.org with these achievements...")
 
         # Note: This triggers Claude to update the homepage
@@ -335,7 +338,7 @@ class Commands:
         print("📄 Check: https://collective-context.org")
         return 0
 
-    def git_push_ccc(self, run_tests=False):
+    def git_push_ccc(self, run_tests=False, message=None):
         """Quick push or full validation with tests, then push CCC to GitHub"""
         import subprocess
         import os
@@ -436,9 +439,15 @@ class Commands:
                 subprocess.run(["git", "add", "-A"])
 
                 if run_tests:
-                    commit_msg = f"feat: CCC update with full quality control\n\nComprehensive validation including:\n- 96 test suite fully validated\n- Security audit completed\n- Quality control passed\n- All checks verified before push\n\n🤖 Generated with [Claude Code](https://claude.ai/code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>"
+                    if message:
+                        commit_msg = f"feat: CCC update with full quality control\n\nComprehensive validation including:\n- 96 test suite fully validated\n- Security audit completed\n- Quality control passed\n- All checks verified before push\n\nAdditional notes: {message}\n\n🤖 Generated with [Claude Code](https://claude.ai/code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>"
+                    else:
+                        commit_msg = f"feat: CCC update with full quality control\n\nComprehensive validation including:\n- 96 test suite fully validated\n- Security audit completed\n- Quality control passed\n- All checks verified before push\n\n🤖 Generated with [Claude Code](https://claude.ai/code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>"
                 else:
-                    commit_msg = f"chore: CCC quick update\n\nQuick push for minor changes:\n- Small improvements and fixes\n- No breaking changes\n- Tests skipped for speed\n\n🤖 Generated with [Claude Code](https://claude.ai/code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>"
+                    if message:
+                        commit_msg = f"chore: CCC quick update\n\nQuick push for minor changes:\n- Small improvements and fixes\n- No breaking changes\n- Tests skipped for speed\n\nAdditional notes: {message}\n\n🤖 Generated with [Claude Code](https://claude.ai/code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>"
+                    else:
+                        commit_msg = f"chore: CCC quick update\n\nQuick push for minor changes:\n- Small improvements and fixes\n- No breaking changes\n- Tests skipped for speed\n\n🤖 Generated with [Claude Code](https://claude.ai/code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>"
 
                 result = subprocess.run(["git", "commit", "-m", commit_msg], capture_output=True, text=True)
                 if result.returncode == 0:
