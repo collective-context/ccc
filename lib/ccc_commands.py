@@ -417,6 +417,10 @@ class Commands:
                         temp_file.write(content)
                         temp_file_path = temp_file.name
 
+                    # Print with the massive separator line pattern
+                    print()
+                    print("ccc version =====================================================================================================================")
+                    print()
                     print(f"📝 Version information written to: {temp_file_path}")
                     print("🎯 Claude: Please read and display this file!")
                     print(f"📄 File: {temp_file_path}")
@@ -433,6 +437,9 @@ class Commands:
 
     def git_push_homepage(self, message=None):
         """Analyze session achievements and update collective-context.org"""
+        print()
+        print("ccc git push homepage =====================================================================================================================")
+        print()
         print("🌐 CCC Homepage Update Tool")
         print("=" * 50)
         print("\n📝 Analyzing session achievements...")
@@ -460,9 +467,15 @@ class Commands:
         import os
         from pathlib import Path
 
+        # Print with the massive separator line pattern
+        print()
         if run_tests:
+            print("ccc git push ccc tests =====================================================================================================================")
+            print()
             print("🔍 CCC Full Quality Control & Security Audit")
         else:
+            print("ccc git push ccc =====================================================================================================================")
+            print()
             print("⚡ CCC Quick Push (without tests)")
         print("=" * 50)
 
