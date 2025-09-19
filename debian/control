@@ -1,28 +1,62 @@
-Source: ccc
+Source: cccmd
 Section: utils
 Priority: optional
-Maintainer: Collective Context Team <team@collective-context.org>
+Maintainer: Collective Context Team <collective-context@recode.at>
 Build-Depends: debhelper-compat (= 13),
                dh-python,
-               python3,
+               python3-all,
                python3-setuptools,
                python3-pip,
-               python3-wheel
+               python3-venv
 Standards-Version: 4.6.2
 Homepage: https://collective-context.org
 Vcs-Browser: https://github.com/collective-context/ccc
 Vcs-Git: https://github.com/collective-context/ccc.git
+Rules-Requires-Root: no
 
 Package: ccc
 Architecture: all
 Depends: ${python3:Depends},
          ${misc:Depends},
+         python3 (>= 3.9),
          python3-click,
          python3-rich,
-         python3-pydantic,
-         python3-requests,
-         python3-yaml
+         python3-yaml,
+         python3-requests
+Recommends: tmux,
+            git,
+            curl,
+            wget,
+            jq
+Suggests: pipx,
+          aider
 Description: Collective Context Commander - Core Package
- CCC Commander provides pragmatic multi-agent AI orchestration
- for the Collective Context ecosystem. This is the core base package
- that provides the essential CCC functionality.
+ The Collective Context Commander (CCC) is a multi-agent AI orchestration
+ tool that solves the "Groundhog Day" problem of AI sessions by providing
+ persistent context management across multiple AI agents.
+ .
+ This package provides the core ccc command-line tool.
+
+Package: cccmd
+Architecture: all
+Depends: ${misc:Depends},
+         ccc (= ${binary:Version}),
+         tmux,
+         git,
+         curl,
+         wget,
+         jq,
+         python3-pip
+Recommends: pipx,
+            nodejs,
+            npm,
+            docker.io | docker-ce | podman
+Suggests: aider,
+          gh,
+          python3-venv
+Description: Collective Context Commander - Full Suite (Meta-Package)
+ Meta-package that installs CCC with all recommended tools
+ for a complete multi-agent orchestration environment.
+ .
+ This package includes the core CCC tool plus all recommended
+ dependencies for optimal functionality.

@@ -1,14 +1,23 @@
 #!/usr/bin/make -f
-
-export PYBUILD_NAME=cccmd
-export DH_VERBOSE=1
+export DH_VERBOSE = 1
+export PYBUILD_NAME = cccmd
+export PYBUILD_INSTALL_ARGS = --install-scripts=/usr/bin
 
 %:
 	dh $@ --with python3 --buildsystem=pybuild
 
 override_dh_auto_clean:
-	dh_auto_clean || true
+	dh_auto_clean
+	rm -rf build dist *.egg-info
+	find . -name __pycache__ -type d -exec rm -rf {} + || true
+
+override_dh_auto_install:
+	dh_auto_install
+	# Stelle sicher, dass die Binaries korrekt installiert sind
+	mkdir -p debian/ccc/usr/bin
+	cp debian/tmp/usr/bin/ccc debian/ccc/usr/bin/ || true
+	cp debian/tmp/usr/bin/cccmd debian/ccc/usr/bin/ || true
 
 override_dh_auto_test:
-	# Skip tests during build
-	echo "Skipping tests during package build"
+	# Tests während des Builds ausführen (optional)
+	@echo "Skipping tests during build (bereits via CI getestet)"
