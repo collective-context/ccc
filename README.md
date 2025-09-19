@@ -133,7 +133,7 @@ ccc ve fu                 # Show detailed version
 ## Documentation
 
 - **Built-in Help**: `ccc help full` for comprehensive command reference
-- **Online Documentation**: https://collective-context.org/ccc/
+- **Online Documentation**: https://collective-context.org/ccc/installation/
 - **Ubuntu PPA**: https://launchpad.net/~collective-context/+archive/ubuntu/ccc
 
 ## Contributing
