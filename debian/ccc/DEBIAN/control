@@ -1,0 +1,13 @@
+Package: ccc
+Version: 0.3.4-ubuntu1
+Architecture: all
+Maintainer: Collective Context Team <team@collective-context.org>
+Installed-Size: 239
+Depends: python3-click, python3-pydantic, python3-requests, python3-rich, python3-yaml, python3:any
+Section: utils
+Priority: optional
+Homepage: https://collective-context.org
+Description: Collective Context Commander - Core Package
+ CCC Commander provides pragmatic multi-agent AI orchestration
+ for the Collective Context ecosystem. This is the core base package
+ that provides the essential CCC functionality.

@@ -2,6 +2,7 @@ LICENSE
 README.md
 ccc_main.py
 pyproject.toml
+setup.py
 ./ccc_main.py
 cccmd.egg-info/PKG-INFO
 cccmd.egg-info/SOURCES.txt
@@ -10,6 +11,7 @@ cccmd.egg-info/entry_points.txt
 cccmd.egg-info/requires.txt
 cccmd.egg-info/top_level.txt
 lib/ccc_claude.py
+lib/ccc_command_parser.py
 lib/ccc_commands.py
 lib/ccc_dialog_monitor.py
 lib/ccc_manager.py

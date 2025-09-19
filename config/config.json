@@ -11,8 +11,8 @@
     },
     "save": {
       "enabled": true,
-      "target_dir": "~/prog/ai/osCASH.me",
-      "tmux_session": "claude",
+      "target_dir": "~/prog/ai/osCASHme",
+      "tmux_session": "Claude-1",
       "log_file": "~/prog/ai/py/ctc/logs/sessions/session_2025-09-11_04-13-59.md",
       "session_start": "2025-09-11 04:13:59",
       "with_dialog": false,
@@ -27,6 +27,253 @@
       "dev": "/usr/local/bin/ccc",
       "pipx": "/home/mayer/.local/bin/ccc",
       "apt": "/usr/bin/ccc"
+    }
+  },
+  "ppa_management": {
+    "enabled": true,
+    "target_ppa": "ppa:collective-context/ccc",
+    "auto_upload_packages": [
+      {
+        "name": "ccc",
+        "type": "base",
+        "version": "0.3.4",
+        "description": "CCC - Collective Context Commander (Base Package)",
+        "dependencies": [
+          "python3",
+          "python3-pip",
+          "python3-venv"
+        ],
+        "enabled": true
+      },
+      {
+        "name": "cccmd",
+        "type": "meta",
+        "version": "0.3.4",
+        "description": "CCC - Complete Development Environment (Meta Package)",
+        "dependencies": [
+          "ccc",
+          "tmux",
+          "git",
+          "pipx",
+          "npm",
+          "nodejs",
+          "python3",
+          "python3-pip",
+          "python3-venv",
+          "jq",
+          "sqlite3",
+          "inotify-tools",
+          "build-essential"
+        ],
+        "recommended": [
+          "gh",
+          "neovim",
+          "docker.io"
+        ],
+        "enabled": true
+      }
+    ],
+    "supported_distributions": [
+      {
+        "codename": "jammy",
+        "version": "22.04",
+        "description": "Ubuntu 22.04 LTS (Jammy Jellyfish)",
+        "enabled": true,
+        "priority": "high"
+      },
+      {
+        "codename": "noble",
+        "version": "24.04",
+        "description": "Ubuntu 24.04 LTS (Noble Numbat)",
+        "enabled": true,
+        "priority": "high"
+      }
+    ],
+    "build_settings": {
+      "auto_sign": true,
+      "check_duplicates": true,
+      "include_copyright": true,
+      "build_timeout": 300,
+      "upload_timeout": 180
+    },
+    "notification_settings": {
+      "on_success": true,
+      "on_failure": true,
+      "on_duplicate_skip": true,
+      "include_launchpad_links": true
+    },
+    "debian_packaging_guidelines": {
+      "common_mistakes_to_avoid": {
+        "source_format": {
+          "rule": "Always use '3.0 (quilt)' for packages with debian revisions (e.g., 0.3.4-jammy1)",
+          "problem": "Native format '3.0 (native)' cannot have debian revisions",
+          "location": "debian/source/format",
+          "correct_content": "3.0 (quilt)"
+        },
+        "orig_tarball": {
+          "rule": "Meta packages need orig.tar.gz even if minimal",
+          "problem": "Missing cccmd_VERSION.orig.tar.gz causes build failure",
+          "solution": "Create minimal tarball with dummy content for meta packages",
+          "command": "tar czf PACKAGE_VERSION.orig.tar.gz dummy-content/"
+        },
+        "newlines": {
+          "rule": "All debian/ files must end with newline",
+          "problem": "dpkg-source warns about missing newlines",
+          "affected_files": [
+            "debian/changelog",
+            "debian/control",
+            "debian/copyright",
+            "debian/rules"
+          ]
+        },
+        "version_conflicts": {
+          "rule": "Clean up old changelog entries when renaming packages",
+          "problem": "dch refuses to create 'lower' versions (jammy1 after noble1)",
+          "solution": "Reset changelog to clean base version before building"
+        },
+        "package_renaming": {
+          "rule": "When renaming source packages, update ALL references",
+          "checklist": [
+            "debian/control Source: field",
+            "debian/changelog package name",
+            "build scripts (build-meta.sh directory changes)",
+            "PPA upload scripts (filename patterns)",
+            "Configuration files (package names)"
+          ]
+        },
+        "environment_setup": {
+          "rule": "Always set DEBEMAIL and EMAIL environment variables",
+          "problem": "dch warnings and interactive prompts",
+          "solution": "export DEBEMAIL='team@collective-context.org' && export DEBFULLNAME='Collective Context Team'",
+          "automated_fix": "Set in build scripts or global config"
+        },
+        "interactive_prompts": {
+          "rule": "Avoid interactive prompts in automated builds",
+          "common_prompts": [
+            "dch: Did you see those 2 warnings? Press RETURN to continue...",
+            "continue anyway? (y/n)"
+          ],
+          "solutions": [
+            "Use dch --no-query flag",
+            "Use debuild -d flag to ignore build dependencies",
+            "Use non-interactive mode flags"
+          ]
+        },
+        "file_permissions": {
+          "rule": "Ensure correct permissions for debian files",
+          "executable_files": [
+            "debian/rules",
+            "debian/postinst",
+            "debian/preinst"
+          ],
+          "fix_command": "chmod +x debian/rules debian/postinst"
+        },
+        "duplicate_upload_prevention": {
+          "rule": "CRITICAL: Always check if packages already exist on Launchpad before upload",
+          "problem": "Uploading duplicate packages causes Launchpad rejection emails and violates system rules",
+          "solution": "Scrape PPA page to verify package versions don't already exist",
+          "implementation": "check_ppa_for_duplicates() function in professional build system",
+          "ppa_url": "https://launchpad.net/~collective-context/+archive/ubuntu/ccc",
+          "check_method": "Search for 'ccc VERSION-CODENAME' in PPA page text",
+          "failure_action": "STOP upload process immediately if duplicates found",
+          "user_feedback": "Hier h\u00e4ttest dun nach unseren Vorgaben keinen zweiten Uplaod starten d\u00fcrfen",
+          "lesson_learned": "2025-09-19: Noble package was uploaded twice, received Launchpad rejection email"
+        },
+        "orig_tarball_consistency": {
+          "rule": "CRITICAL: All distributions must use IDENTICAL orig.tar.gz with same checksums",
+          "problem": "Different orig.tar.gz files for same version cause Launchpad rejection",
+          "launchpad_error": "File ccc_0.3.4.orig.tar.gz already exists in Collective Context Commander - Ubuntu packages, but uploaded version has different contents",
+          "root_cause": "Different timestamps in debian/changelog create different orig.tar.gz checksums",
+          "solution": "Create orig.tar.gz ONCE and use fixed timestamp for all distributions",
+          "implementation": "Move orig.tar.gz to packaging directory before building distributions",
+          "fixed_in": "ccc_professional_build.py lines 184-193",
+          "lesson_learned": "2025-09-19: Jammy package rejected due to different orig.tar.gz checksums",
+          "technical_details": {
+            "noble_checksum": "a2b2ef424e47ab9ebc459558cda5418eb7930f7e (186473 bytes)",
+            "jammy_checksum": "0aa5b402758ad2c133a54fb6151aa11cf014b6a1 (187875 bytes)",
+            "difference": "1402 bytes caused by different changelog timestamps"
+          },
+          "successful_fix_verification": {
+            "date": "2025-09-19",
+            "result": "IDENTICAL checksums achieved",
+            "jammy_final": "dbc842bca5c0da6b3c2c212013c59964cfa15f4d80d3216db5340b996b0c9aa8 (190402 bytes)",
+            "noble_final": "dbc842bca5c0da6b3c2c212013c59964cfa15f4d80d3216db5340b996b0c9aa8 (190402 bytes)",
+            "status": "Both packages successfully built and ready for upload"
+          }
+        },
+        "professional_build_system": {
+          "rule": "Use comprehensive professional build system for all PPA operations",
+          "command": "cc ex up ppa (triggers ccc_professional_build.py)",
+          "key_features": [
+            "Multi-distribution builds with single orig.tar.gz",
+            "Fixed timestamp consistency across distributions",
+            "Automatic duplicate checking before upload",
+            "Clean workspace management",
+            "Professional logging and error handling"
+          ],
+          "critical_fixes": {
+            "timezone_handling": "Set TZ=Europe/Berlin and use time.tzset() for proper timestamps",
+            "debuild_location": "Copy orig.tar.gz to parent directory for debuild access",
+            "non_interactive": "Use debuild -d flag to avoid interactive prompts"
+          },
+          "dependency_requirements": {
+            "python3_bs4": "Required for PPA duplicate checking (sudo apt install python3-bs4)",
+            "note": "System will continue without bs4 but with warning"
+          },
+          "gpg_signing_status": {
+            "issue": "IOCTL errors in non-interactive environment",
+            "workaround": "Continue with unsigned packages, use existing signing system",
+            "fallback": "Manual signing works with existing ccc upload ppa ccc command"
+          },
+          "success_criteria": "Both jammy and noble packages built with identical checksums and duplicate prevention working"
+        }
+      },
+      "required_files": {
+        "meta_package": [
+          "debian/control (with proper dependencies)",
+          "debian/changelog (clean version history)",
+          "debian/copyright (to avoid Launchpad warnings)",
+          "debian/rules (minimal for meta packages)",
+          "debian/source/format (3.0 quilt)",
+          "PACKAGE_VERSION.orig.tar.gz (minimal tarball)"
+        ]
+      },
+      "version_management": {
+        "base_version_pattern": "0.3.X",
+        "debian_revision_pattern": "CODENAME1 (e.g., jammy1, noble1)",
+        "upgrade_process": [
+          "1. Update base version in all source files",
+          "2. Update build scripts with new version",
+          "3. Clean old build artifacts",
+          "4. Reset changelog to clean state",
+          "5. Verify source format is correct",
+          "6. Create new orig.tar.gz if needed"
+        ]
+      },
+      "multi_distribution_builds": {
+        "rule": "Both base and meta packages must build for ALL supported Ubuntu distributions",
+        "pattern": "Use build functions that iterate through distribution list",
+        "implementation": {
+          "base_packages": {
+            "script": "scripts/build-deb.sh",
+            "pattern": "build_ccc_for_ubuntu() function with codename parameter",
+            "output_files": "ccc_VERSION-CODENAME1_source.changes for each distribution"
+          },
+          "meta_packages": {
+            "script": "ccc-debian-packaging/build-meta.sh",
+            "pattern": "build_meta_for_ubuntu() function with codename parameter",
+            "output_files": "cccmd_VERSION-CODENAME1_source.changes for each distribution"
+          }
+        },
+        "critical_steps": [
+          "1. Create clean build directory between distributions",
+          "2. Reset debian/changelog for each distribution using dch",
+          "3. Use proper version format: VERSION-CODENAME1 (e.g., 0.3.4-jammy1)",
+          "4. Move build artifacts to parent directory after each build",
+          "5. Verify all .changes files exist before upload"
+        ],
+        "common_mistake": "Building only ubuntu1 instead of jammy1 + noble1 versions"
+      }
     }
   },
   "_config_source": "/home/mayer/.config/ccc/config.json"

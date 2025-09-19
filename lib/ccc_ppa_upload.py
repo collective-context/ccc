@@ -12,7 +12,7 @@ class PPAUploader:
     def __init__(self, manager):
         self.manager = manager
         self.log_dir = Path("local-only/logs")
-        self.log_dir.mkdir(exist_ok=True)
+        self.log_dir.mkdir(parents=True, exist_ok=True)
 
     def log_operation(self, message, level="INFO"):
         """Log operation to both CCC and specific PPA log"""
@@ -261,7 +261,7 @@ expect eof
         return success_count == total_count
 
 def upload_ppa_command(manager):
-    """CCC exec upload-ppa command for CCC 0.3.3 packages"""
+    """CCC exec upload-ppa command for CCC 0.3.4 packages"""
     import sys
 
     # Check if meta package upload is requested
@@ -269,13 +269,19 @@ def upload_ppa_command(manager):
     if "cccmd" in sys.argv:
         return upload_meta_packages(manager)
 
-    print("🚀 CCC 0.3.3 Ubuntu PPA Upload Process")
+    # Load configurations
+    ppa_config = load_ppa_config()
+    gpg_config = load_gpg_config()
+
+    print("🚀 CCC 0.3.4 Ubuntu PPA Upload Process")
     print("=" * 50)
 
-    # Load GPG configuration
-    gpg_config = load_gpg_config()
-    if gpg_config.get("pass"):
-        print("🔐 Using automated GPG signing from config")
+    # Display configuration
+    if not display_ppa_config(ppa_config):
+        return 1
+
+    if gpg_config.get("pass") and ppa_config.get('build_settings', {}).get('auto_sign', True):
+        print("\n🔐 Using automated GPG signing from config")
 
     packaging_dir = Path.home() / "prog/ai/git/collective-context/ccc-debian-packaging"
 
@@ -286,27 +292,27 @@ def upload_ppa_command(manager):
     # Change to packaging directory
     os.chdir(packaging_dir)
 
-    # Look specifically for 0.3.3 changes files
+    # Look specifically for 0.3.4 changes files
     changes_files = [
-        "ccc_0.3.3-jammy1_source.changes",
-        "ccc_0.3.3-noble1_source.changes"
+        "ccc_0.3.4-jammy1_source.changes",
+        "ccc_0.3.4-noble1_source.changes"
     ]
 
     existing_files = [f for f in changes_files if Path(f).exists()]
 
     if not existing_files:
-        print("❌ No CCC 0.3.3 .changes files found")
+        print("❌ No CCC 0.3.4 .changes files found")
         print("Expected files:")
         for f in changes_files:
             print(f"  - {f}")
         return 1
 
-    print(f"📦 Found {len(existing_files)} CCC 0.3.3 package(s):")
+    print(f"📦 Found {len(existing_files)} CCC 0.3.4 package(s):")
     for f in existing_files:
         print(f"  ✓ {f}")
 
     # Check if packages already exist in PPA
-    if check_package_in_ppa_comprehensive("ccc", "0.3.3"):
+    if check_package_in_ppa_comprehensive("ccc", "0.3.4"):
         return 0  # Skip upload
 
     print("\n🔐 Starting GPG signing and PPA upload...")
@@ -342,7 +348,7 @@ def upload_ppa_command(manager):
                 print(f"❌ Failed to upload {changes_file}")
 
         print("\n" + "=" * 50)
-        print("🎉 CCC 0.3.3 PPA upload process completed!")
+        print("🎉 CCC 0.3.4 PPA upload process completed!")
         print("📊 Check upload status at:")
         print("   https://launchpad.net/~collective-context/+archive/ubuntu/ccc")
         print("\n💡 After successful build (15-30 minutes), packages will be available via:")
@@ -366,6 +372,57 @@ def load_gpg_config():
     except Exception as e:
         print(f"⚠️  Warning: Could not load GPG config: {e}")
     return {}
+
+def load_ppa_config():
+    """Load PPA management configuration from ~/.config/ccc/config.json"""
+    try:
+        import json
+        config_path = Path.home() / ".config/ccc/config.json"
+        if config_path.exists():
+            with open(config_path) as f:
+                config = json.load(f)
+                return config.get('ppa_management', {})
+    except Exception as e:
+        print(f"⚠️  Warning: Could not load PPA config: {e}")
+    return {}
+
+def get_enabled_packages(ppa_config):
+    """Get list of packages enabled for PPA upload"""
+    packages = ppa_config.get('auto_upload_packages', [])
+    return [pkg for pkg in packages if pkg.get('enabled', True)]
+
+def get_enabled_distributions(ppa_config):
+    """Get list of Ubuntu distributions enabled for PPA upload"""
+    distributions = ppa_config.get('supported_distributions', [])
+    return [dist for dist in distributions if dist.get('enabled', True)]
+
+def display_ppa_config(ppa_config):
+    """Display current PPA configuration"""
+    if not ppa_config.get('enabled', True):
+        print("⚠️  PPA management is disabled in configuration")
+        return False
+
+    print(f"🎯 Target PPA: {ppa_config.get('target_ppa', 'ppa:collective-context/ccc')}")
+
+    enabled_packages = get_enabled_packages(ppa_config)
+    print(f"\n📦 Enabled Packages ({len(enabled_packages)}):")
+    for pkg in enabled_packages:
+        pkg_type = pkg.get('type', 'unknown').upper()
+        print(f"  ✅ {pkg['name']} ({pkg_type}) - {pkg.get('description', 'No description')}")
+
+    enabled_distros = get_enabled_distributions(ppa_config)
+    print(f"\n🐧 Enabled Ubuntu Distributions ({len(enabled_distros)}):")
+    for dist in enabled_distros:
+        priority = dist.get('priority', 'normal').upper()
+        print(f"  ✅ {dist['codename']} ({dist['version']}) - {priority} priority")
+
+    settings = ppa_config.get('build_settings', {})
+    print(f"\n⚙️  Build Settings:")
+    print(f"  🔐 Auto-sign: {settings.get('auto_sign', True)}")
+    print(f"  🔍 Check duplicates: {settings.get('check_duplicates', True)}")
+    print(f"  📄 Include copyright: {settings.get('include_copyright', True)}")
+
+    return True
 
 def check_package_exists_in_ppa(package_name, version, distribution):
     """Check if package already exists in Launchpad PPA"""
@@ -563,8 +620,8 @@ expect {{
         return subprocess.run(sign_cmd)
 
 def upload_meta_packages(manager):
-    """Upload CCC 0.3.3 meta packages (cccmd) to Ubuntu PPA"""
-    print("🚀 CCC 0.3.3 Meta Package (CCCMD) Upload Process")
+    """Upload CCC 0.3.4 meta packages (cccmd) to Ubuntu PPA"""
+    print("🚀 CCC 0.3.4 Meta Package (CCCMD) Upload Process")
     print("=" * 55)
     print("📦 Meta package installs: ccc + tmux + git + development tools")
 
@@ -583,11 +640,11 @@ def upload_meta_packages(manager):
     os.chdir(packaging_dir)
 
     # First check if base packages are built
-    print("\n🔍 Checking if base CCC 0.3.3 packages are available...")
+    print("\n🔍 Checking if base CCC 0.3.4 packages are available...")
     base_url = "https://launchpad.net/~collective-context/+archive/ubuntu/ccc"
     print(f"💡 Base packages should be built at: {base_url}")
 
-    # Build meta packages for 0.3.3
+    # Build meta packages for 0.3.4
     print("\n🔨 Building meta packages for Ubuntu versions...")
 
     try:
@@ -601,8 +658,8 @@ def upload_meta_packages(manager):
 
     # Look for built meta packages
     meta_changes_files = [
-        "cccmd-meta_0.3.3-jammy1_source.changes",
-        "cccmd-meta_0.3.3-noble1_source.changes"
+        "cccmd_0.3.4-jammy1_source.changes",
+        "cccmd_0.3.4-noble1_source.changes"
     ]
 
     existing_files = [f for f in meta_changes_files if Path(f).exists()]
@@ -619,7 +676,7 @@ def upload_meta_packages(manager):
         print(f"  ✓ {f}")
 
     # Check if meta packages already exist in PPA
-    if check_package_in_ppa_comprehensive("cccmd-meta", "0.3.3"):
+    if check_package_in_ppa_comprehensive("cccmd", "0.3.4"):
         return 0  # Skip upload
 
     print("\n🔐 Starting GPG signing and PPA upload...")
@@ -655,7 +712,7 @@ def upload_meta_packages(manager):
                 print(f"❌ Failed to upload {changes_file}")
 
         print("\n" + "=" * 55)
-        print("🎉 CCC 0.3.3 Meta Package upload completed!")
+        print("🎉 CCC 0.3.4 Meta Package upload completed!")
         print("📊 Check upload status at:")
         print("   https://launchpad.net/~collective-context/+archive/ubuntu/ccc")
         print("\n💡 After successful build, users can install the complete suite:")
@@ -682,6 +739,120 @@ def upload_meta_packages(manager):
     else:
         print("❌ Some packages failed to upload. Check logs for details.")
         return 1
+
+def upload_all_packages(manager):
+    """Upload ALL packages (base CCC + meta CCCMD) to Ubuntu PPA - SMART VERSION"""
+    print("🚀 CCC 0.3.4 COMPLETE Package Upload Process")
+    print("=" * 60)
+    print("📦 SMART Upload: Build + Upload ALL packages automatically")
+    print()
+
+    # Step 1: Check and build base packages if needed
+    print("🔵 Step 1: BASE packages (ccc)...")
+    print("-" * 40)
+
+    # Check if base packages exist
+    from pathlib import Path
+    import os
+
+    packaging_dir = Path.home() / "prog/ai/git/collective-context/ccc-debian-packaging"
+    os.chdir(packaging_dir)
+
+    base_changes_files = [
+        "ccc_0.3.4-jammy1_source.changes",
+        "ccc_0.3.4-noble1_source.changes"
+    ]
+
+    existing_base_files = [f for f in base_changes_files if Path(f).exists()]
+
+    if len(existing_base_files) == 0:
+        print("📦 No base packages found - building from scratch...")
+        # Build base packages using the build script
+        import subprocess
+        try:
+            print("🔨 Building CCC 0.3.4 base packages...")
+            os.chdir(Path.home() / "prog/ai/git/collective-context/ccc")
+            build_result = subprocess.run(["./scripts/build-deb.sh"], check=False)
+            if build_result.returncode != 0:
+                print("❌ Failed to build base packages")
+                return 1
+            print("✅ Base packages built successfully!")
+        except Exception as e:
+            print(f"❌ Build error: {e}")
+            return 1
+
+        # Return to packaging directory
+        os.chdir(packaging_dir)
+    else:
+        print(f"📦 Found {len(existing_base_files)} existing base packages")
+
+    # Upload base packages
+    print("📤 Uploading base packages...")
+    base_result = upload_ppa_command(manager)
+
+    if base_result != 0:
+        print("❌ Base package upload failed. Stopping.")
+        return base_result
+
+    print("\n✅ Base packages uploaded successfully!")
+    print()
+
+    # Step 2: Check and build meta packages if needed
+    print("🟢 Step 2: META packages (cccmd)...")
+    print("-" * 40)
+
+    meta_changes_files = [
+        "cccmd_0.3.4-jammy1_source.changes",
+        "cccmd_0.3.4-noble1_source.changes"
+    ]
+
+    existing_meta_files = [f for f in meta_changes_files if Path(f).exists()]
+
+    if len(existing_meta_files) == 0:
+        print("📦 No meta packages found - building from scratch...")
+        # Build meta packages using the build script
+        try:
+            print("🔨 Building CCCMD 0.3.4 meta packages...")
+            build_result = subprocess.run(["./build-meta.sh"], check=False)
+            if build_result.returncode != 0:
+                print("❌ Failed to build meta packages")
+                print("⚠️  Base packages were uploaded successfully, but meta build failed.")
+                return 1
+            print("✅ Meta packages built successfully!")
+        except Exception as e:
+            print(f"❌ Meta build error: {e}")
+            print("⚠️  Base packages were uploaded successfully, but meta build failed.")
+            return 1
+    else:
+        print(f"📦 Found {len(existing_meta_files)} existing meta packages")
+
+    # Upload meta packages
+    print("📤 Uploading meta packages...")
+    meta_result = upload_meta_packages(manager)
+
+    if meta_result != 0:
+        print("❌ Meta package upload failed.")
+        print("⚠️  Base packages were uploaded successfully, but meta packages failed.")
+        return meta_result
+
+    print("\n✅ Meta packages uploaded successfully!")
+    print()
+
+    # Final success message
+    print("=" * 60)
+    print("🎉 COMPLETE CCC 0.3.4 Package Upload Finished!")
+    print("📊 Check upload status at:")
+    print("   https://launchpad.net/~collective-context/+archive/ubuntu/ccc")
+    print()
+    print("💡 After successful build, users can install:")
+    print("   • Individual: sudo apt install ccc")
+    print("   • Complete:   sudo apt install cccmd")
+    print()
+    print("📦 Available packages:")
+    print("   • ccc (BASE) - Core CCC Commander tool")
+    print("   • cccmd (META) - Complete development suite with dependencies")
+
+    return 0
 
 if __name__ == "__main__":
     """CLI entry point for standalone usage"""

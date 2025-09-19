@@ -1,4 +1,4 @@
-Source: cccmd
+Source: ccc
 Section: utils
 Priority: optional
 Maintainer: Collective Context Team <team@collective-context.org>
@@ -13,7 +13,7 @@ Homepage: https://collective-context.org
 Vcs-Browser: https://github.com/collective-context/ccc
 Vcs-Git: https://github.com/collective-context/ccc.git
 
-Package: cccmd
+Package: ccc
 Architecture: all
 Depends: ${python3:Depends},
          ${misc:Depends},
@@ -22,8 +22,7 @@ Depends: ${python3:Depends},
          python3-pydantic,
          python3-requests,
          python3-yaml
-Description: Collective Context Commander - Multi-Agent AI Orchestration
- CCC Commander (cccmd) provides pragmatic multi-agent AI orchestration
- for the Collective Context ecosystem. It enables seamless coordination
- between multiple AI agents, session persistence, and supports 300+ AI
- models through various providers.
+Description: Collective Context Commander - Core Package
+ CCC Commander provides pragmatic multi-agent AI orchestration
+ for the Collective Context ecosystem. This is the core base package
+ that provides the essential CCC functionality.

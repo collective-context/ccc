@@ -86,7 +86,7 @@ def main():
     # Handle no arguments - show help
     if len(sys.argv) <= 1:
         mode, path = detect_current_mode()
-        print(f"CCC Commander (cc/ccc/cccmd) v0.3.3 {mode} - Multi-Agent AI Orchestration")
+        print(f"CCC Commander (cc/ccc/cccmd) v0.3.4 {mode} - Multi-Agent AI Orchestration")
         print("\nVerfügbare Commands (mit flexiblen Abkürzungen):")
         print("  ve[rsion]        - Zeige Version und Installation")
         print("  he[lp]           - Zeige diese Hilfe")
@@ -130,7 +130,7 @@ def main():
                 return commands.help_write_and_read("full")
             else:
                 # Standard help
-                print("CCC Commander (cccmd) v0.3.3 - Multi-Agent AI Orchestration")
+                print("CCC Commander (cccmd) v0.3.4 - Multi-Agent AI Orchestration")
                 print("\nVerfügbare Commands (mit flexiblen Abkürzungen):")
                 print("  ve[rsion]        - Zeige Version")
                 print("  he[lp]           - Zeige diese Hilfe")
@@ -187,7 +187,7 @@ def main():
             return handle_git_command(expanded_commands, free_string, commands)
 
         elif expanded_commands[0] == 'exec':
-            return handle_exec_command(expanded_commands, manager)
+            return handle_exec_command(expanded_commands, manager, commands)
 
         else:
             print(f"❌ Unknown command: {expanded_commands[0]}")
@@ -247,7 +247,7 @@ def show_short_version(manager, original_args, expanded_commands):
 
     # Don't show expansion for short commands - just show the result directly
     print("USER: ccc version =====================================================================")
-    print(f"{mode} Mode (v0.3.3)    # Path: {path}")
+    print(f"{mode} Mode (v0.3.4)    # Path: {path}")
     print("ccc config mode apt  # Switch to APT/PIP/DEV version")
     return 0
 
@@ -346,35 +346,46 @@ def handle_git_command(expanded_commands, free_string, commands):
     print("  gi[t] pu[sh] cc[c] te[sts]  - Full validation & push")
     return 1
 
-def handle_exec_command(expanded_commands, manager):
+def handle_exec_command(expanded_commands, manager, commands):
     """Handle exec commands"""
     if len(expanded_commands) >= 3:
         if expanded_commands[1] == 'upload' and expanded_commands[2] == 'ppa':
-            return upload_ppa_command(manager)
+            # Check if specific target is provided
+            if len(expanded_commands) >= 4:
+                target = expanded_commands[3]
+                if target == 'cccmd':
+                    # Upload only meta packages
+                    from ccc_ppa_upload import upload_meta_packages
+                    return upload_meta_packages(manager)
+                elif target == 'ccc':
+                    # Upload only base packages
+                    return upload_ppa_command(manager)
+                else:
+                    print(f"❌ Unknown PPA target: {target}")
+                    print("Available targets: ccc (base), cccmd (meta)")
+                    return 1
+            else:
+                # No target specified - upload ALL packages (base AND meta) - USE PROFESSIONAL SYSTEM
+                from ccc_upload_manager import upload_all_packages_professional
+                return upload_all_packages_professional(manager)
         elif expanded_commands[1] == 'fix' and expanded_commands[2] == 'gpg':
             from ccc_ultimate_gpg_fix import fix_all_packages
             fix_all_packages()
             return 0
         elif expanded_commands[1] == 'upload' and expanded_commands[2] == 'meta':
+            # Alias for upload meta packages
             from ccc_ppa_upload import upload_meta_packages
             return upload_meta_packages(manager)
-        elif len(expanded_commands) >= 4 and expanded_commands[1] == 'upload' and expanded_commands[2] == 'ppa':
-            # Handle "exec upload ppa ccc" and "exec upload ppa cccmd"
-            target = expanded_commands[3] if len(expanded_commands) > 3 else None
-            if target == 'cccmd':
-                from ccc_ppa_upload import upload_meta_packages
-                return upload_meta_packages(manager)
-            elif target == 'ccc':
-                return upload_ppa_command(manager)
-            else:
-                # Default to regular PPA upload
-                return upload_ppa_command(manager)
+        elif expanded_commands[1] == 'show' and expanded_commands[2] == 'ppa':
+            # Use file-based approach like "ccc help full"
+            return commands.ppa_show_write_and_read()
 
     print("❌ Available exec commands:")
-    print("  ex[ec] up[load] pp[a]         - Upload base packages to PPA")
-    print("  ex[ec] up[load] pp[a] cc[c]   - Upload base packages to PPA")
-    print("  ex[ec] up[load] pp[a] cccmd   - Upload meta packages to PPA")
+    print("  ex[ec] up[load] pp[a]         - Upload all (base & meta) packages")
+    print("  ex[ec] up[load] pp[a] cc[c]   - Upload base packages only to PPA")
+    print("  ex[ec] up[load] pp[a] cccmd   - Upload meta packages only to PPA")
     print("  ex[ec] up[load] me[ta]        - Upload meta packages (alias)")
+    print("  ex[ec] sh[ow] pp[a]           - Show PPA configuration")
     print("  ex[ec] fi[x] gp[g]            - ULTIMATE GPG signature fix")
     return 1
 
