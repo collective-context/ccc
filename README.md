@@ -138,7 +138,7 @@ ccc ve fu                 # Show detailed version
 
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+Contributions welcome! Please open issues or pull requests on GitHub.
 
 ## License
 
