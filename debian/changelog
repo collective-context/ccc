@@ -1,23 +1,8 @@
-ccc (0.3.4-ubuntu1) jammy; urgency=medium
+cccmd (0.3.4-1~deb12u1) bookworm; urgency=medium
 
-  * Updated to version 0.3.4
-  * Enhanced flexible command abbreviation system
-  * Improved PPA upload automation
-  * Smart package building and uploading
-  * Meta package integration (cccmd)
-  * Better error handling and user guidance
+  * New upstream release 0.3.4
+  * Automated build for Debian 12 (bookworm)
+  * PyPI package: https://pypi.org/project/cccmd/
+  * Full changelog: https://github.com/collective-context/ccc/releases
 
- -- Collective Context Team <team@collective-context.org>  Fri, 19 Sep 2025 01:00:00 +0300
-
-ccc (0.3.2-ubuntu1) jammy; urgency=medium
-
-  * Comprehensive test suite with 96 tests
-  * GitHub Actions CI/CD pipeline with matrix testing
-  * Security scanning infrastructure (bandit, safety, pip-audit)
-  * Automated PyPI deployment workflow
-  * PPA upload tools for Ubuntu distribution
-  * Enhanced build automation with Makefile
-  * Security hardening with input validation
-  * Command injection and path traversal prevention
-
- -- Collective Context Team <team@collective-context.org>  Tue, 17 Sep 2025 22:00:00 +0100
+ -- Collective Context Team <collective-context@recode.at>  Fri, 19 Sep 2025 05:11:07 +0300
