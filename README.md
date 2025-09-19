@@ -138,7 +138,7 @@ ccc ve fu                 # Show detailed version
 
 ## Contributing
 
-Contributions welcome! Please open issues or pull requests on GitHub.
+Contributions welcome! Join the discussion at [GitHub Discussions](https://github.com/collective-context/ccc/discussions) or open issues and pull requests.
 
 ## License
 
