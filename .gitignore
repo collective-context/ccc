@@ -1,0 +1,79 @@
+# === COLLECTIVE CONTEXT .GITIGNORE ===
+# Lesson from Chapter 9: This MUST be committed FIRST!
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+*.egg
+MANIFEST
+
+# Virtual Environments - ALL VARIANTS
+venv/
+*venv/
+.venv/
+env/
+ENV/
+.env
+virtualenv/
+*virtualenv/
+
+# Node - ABSOLUTE EVERYTHING  
+node_modules/
+node_modules.hidden/
+**/node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+yarn.lock
+
+# Punkt-Konvention - PRIVATE DIRECTORIES
+.backup/
+.work/
+.trash/
+.archive/
+.tmp/
+.cache/
+.temp/
+.old/
+
+# Large Files - NEVER AGAIN
+*.tar.gz
+*.tar
+*.zip
+*.rar  
+*.7z
+*.gz
+*.bz2
+*backup*.tar*
+*.db
+*.sqlite3
+*.log
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+*.sublime-*
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Project specific
+*.local
+.secrets/
+config.local.yml
