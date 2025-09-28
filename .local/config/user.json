@@ -1,0 +1,16 @@
+{
+  "version": "0.3.4",
+  "environment": "development",
+  "sandbox": "ccc-new",
+  "instance": {
+    "name": "Claude-2",
+    "alias": "cl2",
+    "role": "Innovation-Driver"
+  },
+  "paths": {
+    "config_dir": ".local/config",
+    "db_dir": ".local/db", 
+    "work_dir": ".local/work"
+  },
+  "debug": true
+}

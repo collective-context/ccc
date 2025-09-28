@@ -1,0 +1,3 @@
+./ccc-controller/src/cc_markdown_editor.py
+./ccc-commander/src/ccc_main.py
+./ccc-commander/lib/ccc_manager.py

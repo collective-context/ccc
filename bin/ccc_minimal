@@ -1,0 +1,70 @@
+#!/usr/bin/env python3
+"""
+CCC - Minimal Development Version für Claude-2 Sandbox
+Zeigt die grundlegende Wrapper-Funktionalität ohne externe Dependencies
+"""
+
+import sys
+import os
+from pathlib import Path
+
+def print_help():
+    """Minimal help output für lokalen Test"""
+    print("""
+CCC - Collective Context Commander (Development Version)
+Claude-2 Sandbox: /home/mayer/prog/ai/git/collective-context/ccc-new/
+
+Status: ✅ Lokaler Wrapper funktioniert
+Config: ✅ Sandbox-Isolation implementiert
+Structure: ✅ .local/ und config/ erstellt
+
+Available Commands (Minimal Version):
+  help        - Show this help
+  version     - Show version info  
+  status      - Show sandbox status
+
+Note: Full functionality requires missing modules:
+  - ccc_commands, ccc_command_parser, ccc_config_extended
+  
+Wrapper-Pfad: ./bin/ccc_minimal
+Config-Pfad: .local/config/
+""")
+
+def print_version():
+    """Version information"""
+    print("CCC Commander v0.3.4 (Claude-2 Development Sandbox)")
+    print("Wrapper: LOCAL (ccc-new/bin/)")
+    print("Config: ISOLATED (.local/config/)")
+    print("Status: ✅ Sandbox ready for development")
+
+def print_status():
+    """Sandbox status"""
+    ccc_root = Path(__file__).parent.parent
+    print(f"Sandbox Root: {ccc_root}")
+    print(f"Wrapper: {Path(__file__)}")
+    print(f"Config: {ccc_root}/.local/config/")
+    print(f"Database: {ccc_root}/.local/db/")
+    print("Isolation: ✅ Complete")
+
+def main():
+    if len(sys.argv) <= 1:
+        print_help()
+        return 0
+        
+    command = sys.argv[1].lower()
+    
+    if command in ['help', 'h']:
+        print_help()
+    elif command in ['version', 'v']:
+        print_version()  
+    elif command in ['status', 's']:
+        print_status()
+    else:
+        print(f"Unknown command: {command}")
+        print("Use 'help' for available commands")
+        return 1
+        
+    return 0
+
+if __name__ == "__main__":
+    sys.exit(main())

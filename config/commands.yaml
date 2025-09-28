@@ -1,0 +1,33 @@
+# CCC Command Definitions - Public Configuration
+# Diese Datei wird auf GitHub versioniert
+
+commands:
+  help:
+    description: "Show help information"
+    variants: ["help", "help full", "help experimental"]
+    
+  session:
+    description: "Manage AI instance sessions"
+    subcommands:
+      start: "Start new session with AI instance name"
+      save: "Save current session knowledge"
+      end: "Save ALL from session start to end"
+      
+  context:
+    description: "Multi-agent communication system"
+    subcommands:
+      read: "Read own context/messages" 
+      send: "Send message to specific AI instance"
+      broadcast: "Send message to all instances"
+    targets: ["cl1", "cl2", "ai1", "ai2", "all"]
+    
+  git:
+    description: "Git integration and CI/CD monitoring"
+    subcommands:
+      push: "Push code to repositories"
+      status: "Show git and GitHub Actions status"
+      logs: "Show CI/CD workflow logs"
+      check: "Manual CI/CD pipeline check"
+      
+flexible_abbreviations: true
+minimum_chars: 2

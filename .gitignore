@@ -1,60 +1,13 @@
-# === COLLECTIVE CONTEXT .GITIGNORE ===
-# Lesson from Chapter 9: This MUST be committed FIRST!
-
 # Python
 __pycache__/
 *.py[cod]
-*$py.class
 *.so
 .Python
-*.egg-info/
-dist/
-build/
-*.egg
-MANIFEST
-
-# Virtual Environments - ALL VARIANTS
-venv/
-*venv/
-.venv/
 env/
+venv/
 ENV/
-.env
-virtualenv/
-*virtualenv/
-
-# Node - ABSOLUTE EVERYTHING  
-node_modules/
-node_modules.hidden/
-**/node_modules/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-package-lock.json
-yarn.lock
-
-# Punkt-Konvention - PRIVATE DIRECTORIES
-.backup/
-.work/
-.trash/
-.archive/
-.tmp/
-.cache/
-.temp/
-.old/
-
-# Large Files - NEVER AGAIN
-*.tar.gz
-*.tar
-*.zip
-*.rar  
-*.7z
-*.gz
-*.bz2
-*backup*.tar*
-*.db
-*.sqlite3
-*.log
+env.bak/
+venv.bak/
 
 # IDE
 .vscode/
@@ -62,7 +15,6 @@ yarn.lock
 *.swp
 *.swo
 *~
-*.sublime-*
 
 # OS
 .DS_Store
@@ -73,7 +25,64 @@ yarn.lock
 ehthumbs.db
 Thumbs.db
 
-# Project specific
-*.local
-.secrets/
-config.local.yml
+# CCC Specific
+logs/
+tmp/
+*.log
+config/control.txt
+
+# Session files
+SESSION-*.md
+*-CHALLENGE*.md
+
+# User-specific configs
+config/user_config.json
+
+# Local-only documentation (never commit to GitHub)
+local-only/
+
+# Security-sensitive files
+.env
+.env.local
+*.key
+*.pem
+
+# TypeScript/Node.js
+node_modules/
+<<<<<<< HEAD
+dist/cccmd.egg-info/
+cc_venv/
+__pycache__/
+*.pyc
+.env
+logs/*.log
+*.egg-info/
+
+# === CC Controller Reorganisation ===
+# SQLite Datenbanken - NIE in Git!
+*.db
+*.db-journal
+*.sqlite
+*.sqlite3
+
+# Data Verzeichnis
+data/*
+!data/.gitignore
+
+# Backups
+*.backup
+*.bak
+*.original
+*_backup_*
+
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# IDE
+.vscode/
+.idea/
+=======
+dist/
+>>>>>>> 9b342c7 (CRITICAL: Security patches for code execution vulnerabilities)

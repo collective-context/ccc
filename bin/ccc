@@ -1,0 +1,21 @@
+#!/bin/bash
+#
+# CCC - Collective Context Commander
+# Local Development Wrapper für Claude-2 Sandbox
+# 
+# Dieser Wrapper nutzt NUR Code aus der ccc-new/ Sandbox
+# Design-Entscheidung V2: "Your Sandbox, Your Config, Your Data"
+#
+
+# Determine script directory
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+CCC_ROOT="$(dirname "$SCRIPT_DIR")"
+
+# Set PYTHONPATH to include both lib directories
+export PYTHONPATH="$CCC_ROOT/ccc-commander/lib:$CCC_ROOT/ccc-commander/src:$PYTHONPATH"
+
+# Change to the CCC root directory for execution
+cd "$CCC_ROOT"
+
+# Execute Python script from our sandbox
+exec python3 "ccc-commander/src/ccc_main.py" "$@"

@@ -1,0 +1,20 @@
+{
+  "version": "0.3.4",
+  "name": "CCC - Collective Context Commander", 
+  "environment": "development",
+  "team_instances": ["cl1", "cl2", "ai1", "ai2", "all"],
+  "command_categories": {
+    "core": ["help", "version", "config"],
+    "session": ["start", "save", "end"],
+    "context": ["read", "send", "broadcast"],
+    "git": ["push", "status", "logs", "check"]
+  },
+  "paths": {
+    "public_config": "config/",
+    "private_config": ".local/config/",
+    "database": ".local/db/",
+    "work": ".local/work/"
+  },
+  "sandbox_isolation": true,
+  "reproducible_builds": true
+}
