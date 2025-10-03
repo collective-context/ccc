@@ -2,6 +2,7 @@
 # BookStack Installer for Collective Context
 # Usage: wget -qO bs io.collective-context.org/communicator && sudo bash bs
 # oder:  curl -sL io.collective-context.org/communicator | sudo bash
+# oder:  curl -sL raw.githubusercontent.com/collective-context/ccc/refs/heads/main/install/communicator.sh | sudo bash
 
 set -e
 
